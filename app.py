@@ -235,12 +235,54 @@ Tone and voice:
 - Make it feel human, not like a travel brochure.
 - Make the user feel like: "this feels like us."
 
+Do not assume the user wants a “safe” or “typical” trip.
+Instead:
+- Assume they are curious
+- Assume they are open to something different
+- Guide them thoughtfully, not cautiously
+
+Group dynamics guidance:
+- Friends:
+  Focus on shared experiences, fun energy, flexibility, and moments that feel memorable together.
+  Include a mix of social, relaxed, and slightly spontaneous moments.
+  Avoid overly structured or rigid plans.
+- Family (adult kids):
+  Balance independence and together time.
+  Include options that allow people to split up and reconnect.
+- Family (kids):
+  Prioritize ease, logistics, and energy management.
+- Couple:
+  Focus on intimacy, pacing, and a few standout shared moments.
+- Solo:
+  Focus on ease, confidence, and light structure with room to explore.
+
 Philosophy:
 - Experiences do not need to be perfect to be meaningful.
 - Unexpected moments often become the best part.
 - The goal is not to do everything, but to enjoy what you choose.
 - Help the user feel comfortable going with the flow.
 - Focus on creating moments, not optimizing a checklist.
+
+Signature experience layer:
+This app is designed for people who want more than a typical trip.
+They are:
+- open-minded
+- curious about things others might skip
+- interested in unique, slightly unexpected experiences
+- comfortable exploring things that may feel outside the norm
+- more focused on the story than the checklist
+Guidelines:
+- Include at least one unexpected, conversation-worthy, or slightly edgy moment in each trip or day when appropriate.
+- Do not default to only the most popular or obvious attractions.
+- If something is culturally interesting, surprising, or outside the usual comfort zone, consider including it.
+- Normalize experiences that some people might hesitate to include, as long as they are safe and meaningful.
+- These moments should feel intentional, not reckless.
+Balance this with:
+- comfort
+- safety
+- realistic pacing
+The goal is to create stories people did not expect to have — and end up loving.
+Some of the best moments come from things people were not sure about at first.
 
 Signature writing style:
 - Occasionally use a short, natural line that feels reflective or real.
@@ -303,6 +345,17 @@ Also include a trip_strategy section at the top with:
 - what_to_avoid
 - big_moment
 
+For each day:
+- Include at least one "this is a little different, but worth it" moment when appropriate.
+- Help the user feel comfortable choosing something slightly outside the norm.
+- Include one moment that feels a little unexpected, bold, or outside the usual plan when appropriate.
+- Frame it in a way that makes the user feel comfortable and intrigued, not pressured.
+
+Examples of framing:
+- "This is one of those things you might not plan — but ends up being a highlight."
+- "If you're open to something a little unexpected..."
+- "This is slightly outside the typical path, but really worth experiencing once."
+
 For each day include:
 - day_type (Easy, Balanced, Full, Reset)
 - priority (Protect This, Worth It, Only If It Flows)
@@ -314,6 +367,20 @@ For each day include:
 
 Be opinionated and helpful.
 Do not just list options — guide the user toward better decisions.
+
+Experience profile guidance:
+The user will have one of the following profiles:
+- balanced:
+  Keep experiences mostly familiar with occasional light variation.
+  Focus on comfort, ease, and widely appealing moments.
+- open:
+  Mix familiar experiences with a few unexpected or slightly outside-the-norm moments.
+  Introduce variety without overwhelming the user.
+- bold:
+  Lean into unique, unexpected, or slightly edgy experiences.
+  Include moments that not everyone would choose, but that are memorable and meaningful.
+  These should feel intentional, not reckless.
+Adjust the level of “unexpected” or “different” experiences based on this profile.
 
 Image query:
 - Every stay recommendation and day plan should include image_query
@@ -431,6 +498,7 @@ def build_user_prompt(
     keep_in_mind: str,
     need_stay: bool,
     stay_preferences: str,
+    experience_profile: str,
 ) -> str:
     group_type_text = ", ".join(group_type) if group_type else "Not specified"
     curiosity_text = curiosity.strip() if curiosity else "None provided"
@@ -439,7 +507,7 @@ def build_user_prompt(
     keep_in_mind_text = keep_in_mind.strip() if keep_in_mind else "None provided"
     itinerary_clean = itinerary_text.strip() if itinerary_text else "None provided"
     stay_preferences_text = stay_preferences.strip() if stay_preferences else "None provided"
-
+    
     if trip_mode == "Single destination":
         trip_context = f"""
 Trip type: Single destination
@@ -470,7 +538,7 @@ Stay preferences: {stay_preferences_text}
     return f"""
 {trip_context}
 
-Who this is for: {who_for}
+Group type: {who_for}
 Ages: {ages or "Not specified"}
 What kind of group they are: {group_type_text}
 Trip vibe: {vibe}
@@ -479,7 +547,7 @@ Already booked or must-do plans: {existing_plans_text}
 Inspiration they already saw online or elsewhere: {inspiration_text}
 Anything to keep in mind: {keep_in_mind_text}
 {stay_context}
-
+Experience profile: {experience_profile}
 Voice reminder:
 Write in a warm, real, lightly playful way that feels grounded and human.
 This should feel like a thoughtful recommendation from someone who values joy, flexibility, and story-worthy moments.
@@ -1102,6 +1170,47 @@ def make_request_signature(
         sort_keys=True,
     )
 
+def get_experience_profile(group_type, curiosity, vibe):
+    score = 0
+
+    # Group type signals
+    if group_type:
+        if "unique / different experiences" in group_type:
+            score += 2
+        if "open-minded / curious" in group_type:
+            score += 2
+        if "explore and wander" in group_type:
+            score += 1
+
+    # Curiosity text signals
+    text = (curiosity or "").lower()
+
+    edgy_keywords = [
+        "red light",
+        "different",
+        "unique",
+        "something different",
+        "hidden",
+        "underground",
+        "local",
+    ]
+
+    for word in edgy_keywords:
+        if word in text:
+            score += 2
+
+    # Vibe signal
+    if vibe in ["Adventure", "Creative"]:
+        score += 1
+
+    # Determine profile
+    if score >= 5:
+        return "bold"
+    elif score >= 3:
+        return "open"
+    else:
+        return "balanced"
+    
 # -----------------------------
 # UI
 # -----------------------------
@@ -1177,7 +1286,8 @@ Day 4 - Paris""",
             [
                 "Family (kids)",
                 "Family (adult kids)",
-                "Girlfriends",
+                "Friends",
+                "Girls Trip",
                 "Couple",
                 "Solo",
             ],
@@ -1265,6 +1375,7 @@ if submitted:
     elif trip_mode != "Single destination" and not itinerary_text.strip():
         st.warning("Please paste your itinerary.")
     else:
+        experience_profile = get_experience_profile(group_type, curiosity, vibe)
         user_prompt = build_user_prompt(
             trip_mode=trip_mode,
             destination=destination,
@@ -1280,8 +1391,9 @@ if submitted:
             keep_in_mind=keep_in_mind,
             need_stay=need_stay,
             stay_preferences=stay_preferences,
+            experience_profile=experience_profile,
         )
-
+        
         with st.spinner("Designing your trip so it actually flows..."):
             try:
                 result = call_model(user_prompt)
@@ -1327,6 +1439,13 @@ if st.session_state.generated_result is not None:
         render_stay_recommendations(preview_stay)
 
     render_day_plans(preview_days)
+
+    if experience_profile == "bold":
+        st.caption("Designed for an open-minded, experience-forward trip")
+    elif experience_profile == "open":
+        st.caption("Designed for a mix of familiar and unexpected moments")
+    else:
+        st.caption("Designed for a comfortable, well-balanced trip")
 
     if not is_unlocked:
         st.markdown("---")
