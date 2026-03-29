@@ -1,5 +1,6 @@
 import os
 import json
+from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import streamlit as st
 from openai import OpenAI
@@ -9,7 +10,6 @@ from openai import OpenAI
 # -----------------------------
 load_dotenv()
 
-# Prefer Streamlit secrets if deployed, fall back to .env for local use
 api_key = None
 try:
     api_key = st.secrets["OPENAI_API_KEY"]
@@ -24,7 +24,7 @@ client = OpenAI(api_key=api_key)
 st.set_page_config(
     page_title="Extraordinary Moment Finder",
     page_icon="✨",
-    layout="centered",
+    layout="wide",
 )
 
 # -----------------------------
@@ -99,6 +99,7 @@ If the user wants help deciding where to stay:
   - vibe
   - good_for
   - price_range
+  - image_query
 - price_range should include:
   - budget
   - mid_range
@@ -107,17 +108,31 @@ If the user wants help deciding where to stay:
 - keep the ranges directional and realistic, not real-time or exact
 - the purpose is to help the user compare neighborhoods confidently
 
+For each experience recommendation include:
+- image_query
+The image_query should be a short, realistic search phrase for a representative image.
+Examples:
+- "Jordaan Amsterdam canals"
+- "Santorini sunset cliff view"
+- "Naples pizza street"
+- "Paris cafe outdoor street"
+
 For a single destination response, return ONLY valid JSON in this format:
 {
   "mode": "single_destination",
   "title": "Short title for the result set",
   "intro": "One short sentence introducing the recommendations",
+  "best_overall_pick": {
+    "name": "Name of the strongest overall fit",
+    "why": "One sentence why it is the strongest overall fit"
+  },
   "stay_recommendations": [
     {
       "area": "Neighborhood name",
       "why_it_fits": "Why it fits this group",
       "vibe": "2-4 word vibe description",
       "good_for": "What it is good for",
+      "image_query": "Jordaan Amsterdam canals",
       "price_range": {
         "budget": "$120-$180",
         "mid_range": "$180-$300",
@@ -130,7 +145,8 @@ For a single destination response, return ONLY valid JSON in this format:
       "name": "Name of place or experience",
       "why_it_fits": "Why it fits this group",
       "your_twist": "A small twist to make it memorable",
-      "this_becomes": "The story or memory this could become"
+      "this_becomes": "The story or memory this could become",
+      "image_query": "Amsterdam canal sunset"
     }
   ]
 }
@@ -150,7 +166,8 @@ For a cruise or multi-stop itinerary response, return ONLY valid JSON in this fo
       "optional_add_on": "Optional extra if energy or time allows",
       "your_twist": "A small, human way to make it memorable",
       "keep_it_easy": "A realistic pacing or caution note",
-      "this_becomes": "The kind of story or memory this could become"
+      "this_becomes": "The kind of story or memory this could become",
+      "image_query": "Naples Italy pizza street"
     }
   ]
 }
@@ -182,6 +199,16 @@ def call_model(user_prompt: str) -> dict:
         text={"format": {"type": "json_object"}},
     )
     return json.loads(response.output_text)
+
+
+def get_image_url(query: str) -> str:
+    """
+    Simple image URL helper for MVP.
+    Uses Unsplash source endpoint-style URL with query.
+    """
+    if not query:
+        query = "travel destination"
+    return f"https://source.unsplash.com/1200x800/?{quote_plus(query)}"
 
 
 def build_user_prompt(
@@ -253,6 +280,29 @@ Please generate recommendations that feel like a strong fit.
 """.strip()
 
 
+def render_header_card():
+    st.markdown(
+        """
+        <div style="padding:1rem 1.2rem;border-radius:16px;background:linear-gradient(135deg,#f8f2ff,#eef7ff);margin-bottom:1rem;">
+            <h3 style="margin:0 0 .35rem 0;">Not a generic itinerary.</h3>
+            <p style="margin:0;">
+                This tool helps you find experiences that fit your vibe, your people, and the kind of memories you actually want to create.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_best_pick(best_pick: dict):
+    if not best_pick:
+        return
+    name = best_pick.get("name", "")
+    why = best_pick.get("why", "")
+    if name or why:
+        st.success(f"**Best overall fit:** {name} — {why}")
+
+
 def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
     if not stay_recommendations:
         return
@@ -260,81 +310,75 @@ def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
     st.markdown("## 🏡 Where to Stay")
 
     for area in stay_recommendations:
-        st.markdown(f"### {area.get('area', 'Area')}")
-        st.write(f"**Why it fits:** {area.get('why_it_fits', '')}")
-        st.write(f"**Vibe:** {area.get('vibe', '')}")
-        st.write(f"**Good for:** {area.get('good_for', '')}")
+        with st.container(border=True):
+            st.markdown(f"### {area.get('area', 'Area')}")
 
-        price = area.get("price_range", {})
-        if price:
-            st.write("**Price range (per night)**")
-            st.write(f"- Budget: {price.get('budget', '')}")
-            st.write(f"- Mid-range: {price.get('mid_range', '')}")
-            st.write(f"- Luxury: {price.get('luxury', '')}")
+            image_query = area.get("image_query", "")
+            if image_query:
+                st.image(get_image_url(image_query), use_container_width=True)
 
-        st.divider()
+            st.markdown(f"**Why this area feels right**  \n{area.get('why_it_fits', '')}")
+            st.markdown(f"**Neighborhood vibe**  \n{area.get('vibe', '')}")
+            st.markdown(f"**Best for**  \n{area.get('good_for', '')}")
+
+            price = area.get("price_range", {})
+            if price:
+                st.markdown("**Typical nightly range**")
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Budget", price.get("budget", ""))
+                c2.metric("Mid-range", price.get("mid_range", ""))
+                c3.metric("Luxury", price.get("luxury", ""))
 
 
 def render_experience_cards(experiences: list[dict]) -> None:
+    st.markdown("## ✨ Experiences")
+
     for exp in experiences:
-        name = exp.get("name", "Experience")
-        why_it_fits = exp.get("why_it_fits", "")
-        your_twist = exp.get("your_twist", "")
-        this_becomes = exp.get("this_becomes", "")
+        with st.container(border=True):
+            st.markdown(f"### ✨ {exp.get('name', 'Experience')}")
 
-        with st.expander(name, expanded=True):
-            st.markdown("**Why it fits**")
-            st.write(why_it_fits)
+            image_query = exp.get("image_query", "")
+            if image_query:
+                st.image(get_image_url(image_query), use_container_width=True)
 
-            st.markdown("**Your twist**")
-            st.write(your_twist)
+            col1, col2 = st.columns(2)
 
-            st.markdown("**This becomes**")
-            st.write(this_becomes)
+            with col1:
+                st.markdown("**Why this works for your crew**")
+                st.write(exp.get("why_it_fits", ""))
+
+                st.markdown("**Make it a moment**")
+                st.write(exp.get("your_twist", ""))
+
+            with col2:
+                st.markdown("**The story you’ll tell later**")
+                st.write(exp.get("this_becomes", ""))
 
 
 def render_multi_stop_day_plans(stops: list[dict]) -> None:
+    st.markdown("## 🌍 Loose Day Plans by Stop")
+
     for stop in stops:
-        stop_name = stop.get("stop_name", "Stop")
-        why_this_stop_matters = stop.get("why_this_stop_matters", "")
-        best_day_shape = stop.get("best_day_shape", "")
-        main_anchor = stop.get("main_anchor", "")
-        optional_add_on = stop.get("optional_add_on", "")
-        your_twist = stop.get("your_twist", "")
-        keep_it_easy = stop.get("keep_it_easy", "")
-        this_becomes = stop.get("this_becomes", "")
+        with st.container(border=True):
+            st.markdown(f"## 🌍 {stop.get('stop_name', 'Stop')}")
 
-        st.markdown(f"## {stop_name}")
+            image_query = stop.get("image_query", "")
+            if image_query:
+                st.image(get_image_url(image_query), use_container_width=True)
 
-        if why_this_stop_matters:
-            st.markdown("**Why this stop matters**")
-            st.write(why_this_stop_matters)
+            st.markdown(f"**Why this stop matters**  \n{stop.get('why_this_stop_matters', '')}")
+            st.markdown(f"**Best day shape**  \n{stop.get('best_day_shape', '')}")
 
-        if best_day_shape:
-            st.markdown("**Best day shape**")
-            st.write(best_day_shape)
+            col1, col2 = st.columns(2)
 
-        if main_anchor:
-            st.markdown("**Main anchor**")
-            st.write(main_anchor)
+            with col1:
+                st.markdown(f"**Main anchor**  \n{stop.get('main_anchor', '')}")
+                st.markdown(f"**Optional add-on**  \n{stop.get('optional_add_on', '')}")
+                st.markdown(f"**Make it a moment**  \n{stop.get('your_twist', '')}")
 
-        if optional_add_on:
-            st.markdown("**Optional add-on**")
-            st.write(optional_add_on)
-
-        if your_twist:
-            st.markdown("**Your twist**")
-            st.write(your_twist)
-
-        if keep_it_easy:
-            st.markdown("**Keep it easy**")
-            st.write(keep_it_easy)
-
-        if this_becomes:
-            st.markdown("**This becomes**")
-            st.write(this_becomes)
-
-        st.divider()
+            with col2:
+                st.markdown(f"**Keep it easy**  \n{stop.get('keep_it_easy', '')}")
+                st.markdown(f"**The story you’ll tell later**  \n{stop.get('this_becomes', '')}")
 
 
 # -----------------------------
@@ -342,19 +386,18 @@ def render_multi_stop_day_plans(stops: list[dict]) -> None:
 # -----------------------------
 st.title("✨ Extraordinary Moment Finder")
 st.caption("Find experiences you'll actually remember — based on who you are, not just where you're going.")
+render_header_card()
 
-st.write(
-    "Tell me a little about your trip and your people, and I’ll suggest experiences that feel like **you**."
-)
-
-# Put dynamic controls OUTSIDE the form so the UI updates immediately
-trip_mode = st.radio(
-    "Trip type",
-    ["Single destination", "Cruise / Multi-stop trip"],
-    horizontal=True,
-)
-
-need_stay = st.checkbox("Help me figure out where to stay")
+# Dynamic controls outside form so they update immediately
+top_left, top_right = st.columns([2, 1])
+with top_left:
+    trip_mode = st.radio(
+        "Trip type",
+        ["Single destination", "Cruise / Multi-stop trip"],
+        horizontal=True,
+    )
+with top_right:
+    need_stay = st.checkbox("Help me figure out where to stay")
 
 with st.form("moment_finder_form"):
     destination = ""
@@ -389,55 +432,65 @@ August 5 - Venice""",
     else:
         stay_preferences = ""
 
-    who_for = st.selectbox(
-        "Who is this for?",
-        [
-            "Family (kids)",
-            "Family (adult kids)",
-            "Girlfriends",
-            "Couple",
-            "Solo",
-        ],
-    )
+    col1, col2 = st.columns(2)
 
-    ages = st.text_input(
-        "Ages (optional)",
-        placeholder="27, 22, 18 or adults or teens",
-    )
+    with col1:
+        who_for = st.selectbox(
+            "Who is this for?",
+            [
+                "Family (kids)",
+                "Family (adult kids)",
+                "Girlfriends",
+                "Couple",
+                "Solo",
+            ],
+        )
 
-    group_type = st.multiselect(
-        "What kind of group are you?",
-        [
-            "We like to explore and wander",
-            "We like unique / different experiences",
-            "We like good food",
-            "We like interactive / fun things",
-            "We like chill / relaxed vibes",
-            "We're open-minded / curious",
-        ],
-    )
+        ages = st.text_input(
+            "Ages (optional)",
+            placeholder="27, 22, 18 or adults or teens",
+        )
 
-    vibe = st.selectbox(
-        "Vibe for this trip",
-        [
-            "Fun",
-            "Chill",
-            "Adventure",
-            "Creative",
-            "Mix",
-        ],
-    )
+        vibe = st.selectbox(
+            "Vibe for this trip",
+            [
+                "Fun",
+                "Chill",
+                "Adventure",
+                "Creative",
+                "Mix",
+            ],
+        )
 
-    curiosity = st.text_area(
-        "Anything you're curious about? (optional)",
-        placeholder="Red light district, desserts, hidden gems, something different...",
-        height=100,
-    )
+        inspiration_input = st.text_input(
+            "Did you see something you liked? (TikTok, IG, Google, blog, anywhere)",
+            placeholder="Dessert crawl, canal cruise, speakeasy, rooftop bar, cool market...",
+        )
 
-    inspiration_input = st.text_input(
-        "Did you see something you liked? (TikTok, IG, Google, blog, anywhere)",
-        placeholder="Dessert crawl, canal cruise, speakeasy, rooftop bar, cool market...",
-    )
+    with col2:
+        group_type = st.multiselect(
+            "What kind of group are you?",
+            [
+                "We like to explore and wander",
+                "We like unique / different experiences",
+                "We like good food",
+                "We like interactive / fun things",
+                "We like chill / relaxed vibes",
+                "We're open-minded / curious",
+            ],
+        )
+
+        curiosity = st.text_area(
+            "Anything you're curious about? (optional)",
+            placeholder="Red light district, desserts, hidden gems, something different...",
+            height=100,
+        )
+
+        keep_in_mind = st.text_area(
+            "Anything to keep in mind? (optional)",
+            placeholder="Doesn't like rushing, mobility concerns, prefers scenic not strenuous, loves food, wants easy walking...",
+            height=100,
+        )
 
     existing_plans = st.text_area(
         "What do you already have booked or definitely want to do? (include day/time if you know it)",
@@ -448,13 +501,7 @@ Red Light District - one night""",
         height=140,
     )
 
-    keep_in_mind = st.text_area(
-        "Anything to keep in mind? (optional)",
-        placeholder="Doesn't like rushing, mobility concerns, prefers scenic not strenuous, loves food, wants easy walking...",
-        height=100,
-    )
-
-    submitted = st.form_submit_button("Create My Experiences")
+    submitted = st.form_submit_button("Create My Experiences", use_container_width=True)
 
 # -----------------------------
 # Run generation
@@ -491,10 +538,13 @@ if submitted:
                 stay_recommendations = result.get("stay_recommendations", [])
 
                 st.divider()
-                st.subheader(title)
-
+                st.markdown(f"# {title}")
                 if intro:
-                    st.write(intro)
+                    st.caption(intro)
+
+                if mode == "single_destination":
+                    best_pick = result.get("best_overall_pick", {})
+                    render_best_pick(best_pick)
 
                 if need_stay and stay_recommendations:
                     render_stay_recommendations(stay_recommendations)
