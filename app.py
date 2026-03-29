@@ -580,7 +580,7 @@ def render_before_after():
 def render_sample_preview():
     st.markdown("## 💎 Sample Moment Plan Preview")
 
-    st.markdown("""
+    st.html("""
     <div class="luxury-soft-card">
         <div class="luxury-label">Example</div>
         <div class="luxury-section-title">Amsterdam for a family with adult kids</div>
@@ -588,9 +588,9 @@ def render_sample_preview():
             Built for a group that likes wandering, good food, open-minded experiences, and a trip that feels relaxed but still memorable.
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    st.html("""
     <div class="luxury-card">
         <div class="luxury-label">Trip Strategy</div>
         <div class="luxury-value">
@@ -607,13 +607,15 @@ def render_sample_preview():
             Keep breakfast simple and don’t overbook attractions.
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    st.html("""
     <div class="luxury-card">
         <div class="luxury-label">Day 2 — Amsterdam</div>
         <div class="luxury-value">
-            <strong>Day Type:</strong> Balanced &nbsp; • &nbsp; <strong>Priority:</strong> Must &nbsp; • &nbsp; <strong>Budget:</strong> Medium<br><br>
+            <strong>Day Type:</strong> Balanced &nbsp; • &nbsp;
+            <strong>Priority:</strong> Must &nbsp; • &nbsp;
+            <strong>Budget:</strong> Medium<br><br>
 
             <strong>What’s already locked in:</strong><br>
             Canal cruise at 5pm<br><br>
@@ -628,7 +630,7 @@ def render_sample_preview():
             “This was the day we didn’t try too hard and somehow it ended up being perfect.”
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 def render_best_pick(best_pick: dict):
     if not best_pick:
@@ -774,11 +776,11 @@ render_hero()
 render_before_after()
 
 # 👇 ADD THE INTRO LINE RIGHT HERE
-st.markdown("""
+st.html("""
 <p class="preview-note">
-See what a refined plan feels like before you build your own.
+See what a refined plan looks like before you build your own.
 </p>
-""", unsafe_allow_html=True)
+""")
 
 render_sample_preview()
 
