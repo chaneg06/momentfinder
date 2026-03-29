@@ -1,6 +1,7 @@
 import os
 import json
 from io import BytesIO
+
 from dotenv import load_dotenv
 import streamlit as st
 from openai import OpenAI
@@ -55,7 +56,7 @@ st.markdown("""
     }
 
     .block-container {
-        max-width: 920px;
+        max-width: 980px;
         padding-top: 2rem;
         padding-bottom: 4rem;
     }
@@ -105,55 +106,57 @@ st.markdown("""
         margin: 0;
     }
 
-    .soft-panel {
-        padding: 1.25rem 1.35rem;
+    .luxury-card {
+        padding: 1.35rem 1.4rem;
         border-radius: 22px;
-        background: linear-gradient(135deg, #faf7ff 0%, #f3f8ff 100%);
-        border: 1px solid rgba(20,20,20,0.05);
+        border: 1px solid rgba(20,20,20,0.06);
+        background: white;
+        box-shadow: 0 10px 22px rgba(0,0,0,0.035);
+        margin-top: 1rem;
         margin-bottom: 1rem;
     }
 
-    .section-title {
-        font-size: 1.5rem;
+    .luxury-soft-card {
+        padding: 1.3rem 1.4rem;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #faf7ff 0%, #f3f8ff 100%);
+        border: 1px solid rgba(20,20,20,0.05);
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .luxury-section-title {
+        font-size: 1.55rem;
+        margin-bottom: 0.35rem;
         color: #242638;
-        margin-bottom: 0.3rem;
         font-weight: 650;
     }
 
-    .muted {
+    .luxury-muted {
         color: #6a6f7a;
         font-size: 0.95rem;
         line-height: 1.6;
     }
 
-    .card {
-        padding: 1.2rem 1.3rem;
-        border-radius: 20px;
-        background: white;
-        border: 1px solid rgba(20,20,20,0.06);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.03);
-        margin-bottom: 1rem;
-    }
-
-    .label {
-        font-size: 0.78rem;
+    .luxury-label {
+        font-size: 0.82rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #7a7387;
+        color: #767084;
         font-weight: 600;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.25rem;
     }
 
-    .value {
+    .luxury-value {
         font-size: 1rem;
         color: #242638;
         line-height: 1.65;
     }
 
-    .divider {
+    .luxury-divider {
         height: 1px;
-        background: linear-gradient(to right, transparent, rgba(36,38,56,0.12), transparent);
-        margin: 1.7rem 0;
+        background: linear-gradient(to right, transparent, rgba(36,38,56,0.13), transparent);
+        margin: 1.5rem 0 1.5rem 0;
     }
 
     .pill {
@@ -359,7 +362,7 @@ Important:
 - The big_moment must appear explicitly in at least one day's best_choice or loose_day_plan.
 
 For each day:
-- Include at least one “this is a little different, but worth it” moment when appropriate.
+- Include at least one "this is a little different, but worth it" moment when appropriate.
 - Help the user feel comfortable choosing something slightly outside the norm.
 - Include one moment that feels a little unexpected, bold, or outside the usual plan when appropriate.
 - Frame it in a way that makes the user feel comfortable and intrigued, not pressured.
@@ -469,6 +472,7 @@ def call_model(user_prompt: str) -> dict:
             {"role": "system", "content": PROMPT},
             {"role": "user", "content": user_prompt},
         ],
+        text={"format": {"type": "json_object"}},
     )
     return json.loads(response.output_text)
 
@@ -919,10 +923,10 @@ def render_hero():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="soft-panel">
-        <div class="section-title">Not a generic itinerary.</div>
-        <p class="muted">
-            This is less about doing everything and more about doing the right things — with the right people, in the right rhythm.
+    <div class="luxury-soft-card">
+        <div class="luxury-section-title">Not a generic itinerary.</div>
+        <p class="luxury-muted">
+            This helps you shape each day around your vibe, your people, and the kind of memories you actually want to create.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -930,23 +934,23 @@ def render_hero():
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("""
-        <div class="card">
-            <div class="label">What it solves</div>
-            <div class="value">Too many options. Not enough clarity.</div>
+        <div class="luxury-card">
+            <div class="luxury-label">What it solves</div>
+            <div class="luxury-value">Too many options. Not enough clarity.</div>
         </div>
         """, unsafe_allow_html=True)
     with c2:
         st.markdown("""
-        <div class="card">
-            <div class="label">What it gives</div>
-            <div class="value">A trip that feels thought through without feeling overplanned.</div>
+        <div class="luxury-card">
+            <div class="luxury-label">What it gives</div>
+            <div class="luxury-value">A trip that feels thought through without feeling overplanned.</div>
         </div>
         """, unsafe_allow_html=True)
     with c3:
         st.markdown("""
-        <div class="card">
-            <div class="label">Why it feels premium</div>
-            <div class="value">It gives judgment, pacing, and confidence — not just recommendations.</div>
+        <div class="luxury-card">
+            <div class="luxury-label">Why it feels premium</div>
+            <div class="luxury-value">It gives judgment, pacing, and confidence — not just recommendations.</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -957,9 +961,9 @@ def render_before_after():
 
     with c1:
         st.markdown("""
-        <div class="card">
-            <div class="label">Before</div>
-            <div class="value">
+        <div class="luxury-card">
+            <div class="luxury-label">Before</div>
+            <div class="luxury-value">
                 20 tabs open. No idea where to stay. Everyone wants something different.
                 You’re afraid of wasting time, money, or energy.
             </div>
@@ -968,9 +972,9 @@ def render_before_after():
 
     with c2:
         st.markdown("""
-        <div class="card">
-            <div class="label">After</div>
-            <div class="value">
+        <div class="luxury-card">
+            <div class="luxury-label">After</div>
+            <div class="luxury-value">
                 You know where to stay, how to pace the trip, what matters most,
                 and what can flex if the day changes.
             </div>
@@ -987,10 +991,10 @@ def render_sample_preview():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="soft-panel">
-        <div class="label">Example</div>
-        <div class="section-title">Amsterdam for a family with adult kids</div>
-        <p class="muted">
+    <div class="luxury-soft-card">
+        <div class="luxury-label">Example</div>
+        <div class="luxury-section-title">Amsterdam for a family with adult kids</div>
+        <p class="luxury-muted">
             Built for a group that likes wandering, good food, open-minded experiences,
             and a trip that feels relaxed but still memorable.
         </p>
@@ -998,9 +1002,9 @@ def render_sample_preview():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="card">
-        <div class="label">Trip strategy</div>
-        <div class="value">
+    <div class="luxury-card">
+        <div class="luxury-label">Trip strategy</div>
+        <div class="luxury-value">
             <strong>Best area to stay:</strong> Jordaan<br><br>
             <strong>How to pace it:</strong> Start lighter, build into fuller days, then leave room for one evening that just unfolds.<br><br>
             <strong>Where to splurge:</strong> One standout dinner and one memorable experience.
@@ -1009,9 +1013,9 @@ def render_sample_preview():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="card">
-        <div class="label">Day 2 — Amsterdam</div>
-        <div class="value">
+    <div class="luxury-card">
+        <div class="luxury-label">Day 2 — Amsterdam</div>
+        <div class="luxury-value">
             <strong>What’s already locked in:</strong> Canal cruise at 5pm<br><br>
             <strong>The move:</strong> Wander Jordaan before your cruise and let dinner happen naturally afterward.<br><br>
             <strong>Getting around:</strong> Walk — the wandering is part of the point.<br><br>
@@ -1030,9 +1034,9 @@ def render_best_pick(best_pick: dict):
 
     if name or why:
         st.html(f"""
-        <div class="soft-panel">
-            <div class="label">Best overall fit</div>
-            <div class="value"><strong>{name}</strong> — {why}</div>
+        <div class="luxury-soft-card">
+            <div class="luxury-label">Best overall fit</div>
+            <div class="luxury-value"><strong>{name}</strong> — {why}</div>
         </div>
         """)
 
@@ -1046,24 +1050,24 @@ def render_trip_strategy(strategy: dict):
     st.markdown("## 💡 The Strategy")
 
     st.html(f"""
-    <div class="card">
-        <div class="label">Best area to stay</div>
-        <div class="value"><strong>{strategy.get('stay_best_area', '')}</strong><br>{strategy.get('stay_why', '')}</div>
+    <div class="luxury-card">
+        <div class="luxury-label">Best area to stay</div>
+        <div class="luxury-value"><strong>{strategy.get('stay_best_area', '')}</strong><br>{strategy.get('stay_why', '')}</div>
 
-        <div class="label" style="margin-top:1rem;">How to pace this trip</div>
-        <div class="value">{strategy.get('pacing_strategy', '')}</div>
+        <div class="luxury-label" style="margin-top:1rem;">How to pace this trip</div>
+        <div class="luxury-value">{strategy.get('pacing_strategy', '')}</div>
 
-        <div class="label" style="margin-top:1rem;">Where to splurge</div>
-        <div class="value">{splurge.get('splurge', '')}</div>
+        <div class="luxury-label" style="margin-top:1rem;">Where to splurge</div>
+        <div class="luxury-value">{splurge.get('splurge', '')}</div>
 
-        <div class="label" style="margin-top:1rem;">Where to save</div>
-        <div class="value">{splurge.get('save', '')}</div>
+        <div class="luxury-label" style="margin-top:1rem;">Where to save</div>
+        <div class="luxury-value">{splurge.get('save', '')}</div>
 
-        <div class="label" style="margin-top:1rem;">What to avoid</div>
-        <div class="value">{strategy.get('what_to_avoid', '')}</div>
+        <div class="luxury-label" style="margin-top:1rem;">What to avoid</div>
+        <div class="luxury-value">{strategy.get('what_to_avoid', '')}</div>
 
-        <div class="label" style="margin-top:1rem;">The moment</div>
-        <div class="value">{strategy.get('big_moment', '')}</div>
+        <div class="luxury-label" style="margin-top:1rem;">The moment</div>
+        <div class="luxury-value">{strategy.get('big_moment', '')}</div>
     </div>
     """)
 
@@ -1170,7 +1174,7 @@ render_hero()
 render_before_after()
 render_sample_preview()
 
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
 
 top_left, top_right = st.columns([2, 1])
 
@@ -1370,7 +1374,7 @@ if st.session_state.generated_result is not None:
     preview_stay = stay_recommendations if is_unlocked else stay_recommendations[:2]
     preview_days = days if is_unlocked else days[:2]
 
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
     st.markdown(f"# {title}")
 
     if intro:
