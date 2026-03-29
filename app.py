@@ -203,12 +203,13 @@ def call_model(user_prompt: str) -> dict:
 
 def get_image_url(query: str) -> str:
     """
-    Simple image URL helper for MVP.
-    Uses Unsplash source endpoint-style URL with query.
+    Guaranteed placeholder-style visual for MVP.
+    This avoids broken image icons and still makes the app feel visual.
     """
     if not query:
-        query = "travel destination"
-    return f"https://source.unsplash.com/1200x800/?{quote_plus(query)}"
+        query = "Travel inspiration"
+    safe_query = quote_plus(query)
+    return f"https://placehold.co/1200x700/F7F2FF/4A3F55?text={safe_query}"
 
 
 def build_user_prompt(
@@ -283,10 +284,13 @@ Please generate recommendations that feel like a strong fit.
 def render_header_card():
     st.markdown(
         """
-        <div style="padding:1rem 1.2rem;border-radius:16px;background:linear-gradient(135deg,#f8f2ff,#eef7ff);margin-bottom:1rem;">
-            <h3 style="margin:0 0 .35rem 0;">Not a generic itinerary.</h3>
-            <p style="margin:0;">
-                This tool helps you find experiences that fit your vibe, your people, and the kind of memories you actually want to create.
+        <div style="padding: 1.15rem 1.25rem; border-radius: 18px; 
+                    background: linear-gradient(135deg, #F8F2FF, #EEF7FF); 
+                    margin-bottom: 1rem;">
+            <h3 style="margin: 0 0 .35rem 0;">Not a generic itinerary.</h3>
+            <p style="margin: 0;">
+                This tool helps you find experiences that fit your vibe, your people,
+                and the kind of memories you actually want to create.
             </p>
         </div>
         """,
@@ -314,8 +318,9 @@ def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
             st.markdown(f"### {area.get('area', 'Area')}")
 
             image_query = area.get("image_query", "")
-            if image_query:
-                st.image(get_image_url(image_query), use_container_width=True)
+            st.image(get_image_url(image_query), use_container_width=True)
+
+            st.caption(f"Inspiration: {image_query}")
 
             st.markdown(f"**Why this area feels right**  \n{area.get('why_it_fits', '')}")
             st.markdown(f"**Neighborhood vibe**  \n{area.get('vibe', '')}")
@@ -338,8 +343,8 @@ def render_experience_cards(experiences: list[dict]) -> None:
             st.markdown(f"### ✨ {exp.get('name', 'Experience')}")
 
             image_query = exp.get("image_query", "")
-            if image_query:
-                st.image(get_image_url(image_query), use_container_width=True)
+            st.image(get_image_url(image_query), use_container_width=True)
+            st.caption(f"Inspiration: {image_query}")
 
             col1, col2 = st.columns(2)
 
@@ -363,8 +368,8 @@ def render_multi_stop_day_plans(stops: list[dict]) -> None:
             st.markdown(f"## 🌍 {stop.get('stop_name', 'Stop')}")
 
             image_query = stop.get("image_query", "")
-            if image_query:
-                st.image(get_image_url(image_query), use_container_width=True)
+            st.image(get_image_url(image_query), use_container_width=True)
+            st.caption(f"Inspiration: {image_query}")
 
             st.markdown(f"**Why this stop matters**  \n{stop.get('why_this_stop_matters', '')}")
             st.markdown(f"**Best day shape**  \n{stop.get('best_day_shape', '')}")
@@ -388,7 +393,6 @@ st.title("✨ Extraordinary Moment Finder")
 st.caption("Find experiences you'll actually remember — based on who you are, not just where you're going.")
 render_header_card()
 
-# Dynamic controls outside form so they update immediately
 top_left, top_right = st.columns([2, 1])
 with top_left:
     trip_mode = st.radio(
