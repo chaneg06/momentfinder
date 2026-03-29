@@ -345,6 +345,18 @@ Also include a trip_strategy section at the top with:
 - what_to_avoid
 - big_moment
 
+
+Important:
+The big_moment must appear in one of the actual day plans.
+The strategy should not introduce ideas that are missing from the daily plans.
+The day plans must support the strategy.
+
+Consistency rule:
+Do not name a big moment unless it is actually reflected in the daily plan structure.
+The trip_strategy and the day plans must align with each other.
+The big_moment must appear explicitly in at least one day's best_choice or loose_day_plan.
+
+
 For each day:
 - Include at least one "this is a little different, but worth it" moment when appropriate.
 - Help the user feel comfortable choosing something slightly outside the norm.
@@ -364,6 +376,14 @@ For each day include:
 - backup_option
 - skip_if_tired
 - why_this_works
+
+Each day plan should reflect the broader trip strategy.
+If the trip strategy includes:
+- a best area to stay
+- a pacing strategy
+- a big moment
+- something to avoid
+then the day plans should visibly support those decisions.
 
 Be opinionated and helpful.
 Do not just list options — guide the user toward better decisions.
