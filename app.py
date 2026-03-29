@@ -459,8 +459,17 @@ def render_day_plans(days: list[dict]) -> None:
 # -----------------------------
 # UI
 # -----------------------------
-st.title("✨ Extraordinary Moment Finder")
-st.caption("Find experiences you'll actually remember — based on who you are, not just where you're going.")
+st.title("✨ The Moment Plan")
+st.markdown("""
+Plan your trip in a way that actually feels right.
+
+Not a packed itinerary. Not a list of 50 things to do.  
+A clear, personalized plan built around the moments that matter.
+
+Because the best trips aren't perfect — they just work.
+""")
+st.caption("Built for people who want their trip to feel right — not overplanned.")
+
 render_header_card()
 
 top_left, top_right = st.columns([2, 1])
@@ -578,8 +587,7 @@ Day 4 - Dinner reservation at 7pm""",
         height=140,
     )
 
-    submitted = st.form_submit_button("Create My Day Plans", use_container_width=True)
-
+    submitted = st.form_submit_button("✨ Build My Moment Plan", use_container_width=True)
 # -----------------------------
 # Run generation
 # -----------------------------
@@ -606,7 +614,7 @@ if submitted:
             stay_preferences=stay_preferences,
         )
 
-        with st.spinner("Building day plans that feel like you..."):
+        with st.spinner("Designing your trip so it actually flows..."):
             try:
                 result = call_model(user_prompt)
 
@@ -622,6 +630,22 @@ if submitted:
 
                 if intro:
                     st.caption(intro)
+
+                is_paid = st.text_input("Enter access code to unlock your full plan", type="password")
+
+                is_unlocked = is_paid == "moment"
+
+                st.markdown("""
+                    Sometimes the best parts of a trip are not what you planned.
+
+                    This just makes sure the rest of it works too.
+                    """)
+                # Limit free version
+                if not is_unlocked:
+                    st.info("Previewing your plan — unlock the full experience below 👇")
+                    days = days[:2]
+
+                st.markdown("### Your trip, but finally clear.")
 
                 render_best_pick(best_pick)
                 render_trip_strategy(trip_strategy)
