@@ -185,6 +185,28 @@ st.markdown("""
     [data-testid="stCheckbox"] {
         padding-top: 0.35rem;
     }
+    .luxury-grid-gap {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    }
+
+    .sample-badge {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: #f3eefc;
+        color: #51476a;
+        font-size: 0.82rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+
+    .preview-note {
+        font-size: 0.92rem;
+        color: #6a6f7a;
+        margin-top: -0.25rem;
+        margin-bottom: 1rem;
+    }        
 </style>
 """, unsafe_allow_html=True)
 
@@ -522,6 +544,91 @@ def render_hero():
     with c3:
         st.markdown('<div class="luxury-card"><div class="luxury-label">Why it feels different</div><div class="luxury-value">It gives judgment, pacing, and confidence — not just options.</div></div>', unsafe_allow_html=True)
 
+def render_before_after():
+    st.markdown("## ✨ Before vs After")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("""
+        <div class="luxury-card">
+            <div class="luxury-label">Before</div>
+            <div class="luxury-value">
+                • 20 tabs open<br>
+                • Everyone wants something different<br>
+                • You have no idea where to stay<br>
+                • You’re scared of wasting time or money<br>
+                • The trip feels more overwhelming than exciting
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="luxury-card">
+            <div class="luxury-label">After</div>
+            <div class="luxury-value">
+                • You know the best area to stay<br>
+                • Each day has a clear shape<br>
+                • Your booked plans are worked in naturally<br>
+                • You know where to splurge and where to save<br>
+                • The trip finally feels like it fits <em>you</em>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+def render_sample_preview():
+    st.markdown("## 💎 Sample Moment Plan Preview")
+
+    st.markdown("""
+    <div class="luxury-soft-card">
+        <div class="luxury-label">Example</div>
+        <div class="luxury-section-title">Amsterdam for a family with adult kids</div>
+        <p class="luxury-copy">
+            Built for a group that likes wandering, good food, open-minded experiences, and a trip that feels relaxed but still memorable.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="luxury-card">
+        <div class="luxury-label">Trip Strategy</div>
+        <div class="luxury-value">
+            <strong>Best area to stay:</strong> Jordaan<br>
+            Charming, walkable, and relaxed without feeling boring.<br><br>
+
+            <strong>How to pace this trip:</strong><br>
+            Start lighter, build into fuller days, then leave room for one night that just unfolds.<br><br>
+
+            <strong>Where to splurge:</strong><br>
+            One standout dinner and one unforgettable evening experience.<br><br>
+
+            <strong>Where to save:</strong><br>
+            Keep breakfast simple and don’t overbook attractions.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="luxury-card">
+        <div class="luxury-label">Day 2 — Amsterdam</div>
+        <div class="luxury-value">
+            <strong>Day Type:</strong> Balanced &nbsp; • &nbsp; <strong>Priority:</strong> Must &nbsp; • &nbsp; <strong>Budget:</strong> Medium<br><br>
+
+            <strong>What’s already locked in:</strong><br>
+            Canal cruise at 5pm<br><br>
+
+            <strong>Best choice:</strong><br>
+            Wander Jordaan before your cruise and let dinner happen afterward instead of forcing too much into the day.<br><br>
+
+            <strong>Getting around:</strong><br>
+            Walk — everything feels close, and part of the charm is the wandering.<br><br>
+
+            <strong>The story you’ll tell later:</strong><br>
+            “This was the day we didn’t try too hard and somehow it ended up being perfect.”
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def render_best_pick(best_pick: dict):
     if not best_pick:
@@ -664,6 +771,16 @@ def render_day_plans(days: list[dict]) -> None:
 # UI
 # -----------------------------
 render_hero()
+render_before_after()
+
+# 👇 ADD THE INTRO LINE RIGHT HERE
+st.markdown("""
+<p class="preview-note">
+See what a refined plan feels like before you build your own.
+</p>
+""", unsafe_allow_html=True)
+
+render_sample_preview()
 
 st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
 
