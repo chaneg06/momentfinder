@@ -58,6 +58,7 @@ General priorities:
 - slight surprise / distinctiveness
 - complementing existing plans
 - practical transportation guidance
+- decision-making, not just idea generation
 
 Tone and voice:
 - Write like a thoughtful, real person talking to a friend.
@@ -125,6 +126,29 @@ If the user wants help deciding where to stay:
 - multi-destination: give 1 to 2 strong areas per relevant overnight city
 - cruise: usually return an empty list unless clearly relevant pre/post-cruise
 
+Trip strategy:
+Also include a trip_strategy section at the top with:
+- stay_best_area
+- stay_why
+- pacing_strategy
+- splurge_vs_save:
+  - splurge
+  - save
+- what_to_avoid
+- big_moment
+
+For each day include:
+- day_type (Easy, Balanced, Full, Reset)
+- priority (Must, Nice, Optional)
+- budget_level (Low, Medium, Splurge)
+- best_choice
+- backup_option
+- skip_if_tired
+- why_this_works
+
+Be opinionated and helpful.
+Do not just list options — guide the user toward better decisions.
+
 Image query:
 - Every stay recommendation and day plan should include image_query
 - Use a short, realistic visual search phrase
@@ -137,6 +161,17 @@ Output ONLY valid JSON in this format:
   "best_overall_pick": {
     "name": "Best overall fit",
     "why": "One sentence why"
+  },
+  "trip_strategy": {
+    "stay_best_area": "Jordaan",
+    "stay_why": "Why this area is the strongest overall fit",
+    "pacing_strategy": "How to pace the trip",
+    "splurge_vs_save": {
+      "splurge": "Where to splurge",
+      "save": "Where to save"
+    },
+    "what_to_avoid": "One thing to avoid",
+    "big_moment": "The defining moment of the trip"
   },
   "stay_recommendations": [
     {
@@ -159,6 +194,12 @@ Output ONLY valid JSON in this format:
       "location": "Amsterdam",
       "timing_context": "Arrival afternoon",
       "booked_anchor": "Canal cruise at 5pm",
+      "day_type": "Balanced",
+      "priority": "Must",
+      "budget_level": "Medium",
+      "best_choice": "Best recommendation for the day",
+      "backup_option": "A realistic backup if plans change",
+      "skip_if_tired": "What to skip if energy is low",
       "loose_day_plan": "A relaxed description of how the day should flow around the anchor",
       "getting_around": {
         "mode": "Walk",
@@ -166,6 +207,7 @@ Output ONLY valid JSON in this format:
       },
       "optional_add_on": "One realistic extra if energy/time allows",
       "keep_it_easy": "A pacing or caution note",
+      "why_this_works": "Why this day shape makes sense",
       "this_becomes": "The kind of story or memory this could become",
       "image_query": "Amsterdam canal evening"
     }
@@ -176,7 +218,7 @@ Rules:
 - Return day plans for ALL trip types.
 - Single destination: create one day plan per day of the trip.
 - Multi-destination: create one day plan per day/location in the itinerary.
-- Cruise: create one day plan per port day and include sea days too.
+- Cruise: create one day plan per day/port and include sea days too.
 - Keep each day plan concise but meaningful.
 - Do not overwhelm with too many activities.
 - Avoid stiff phrases like:
@@ -317,6 +359,31 @@ def render_best_pick(best_pick: dict):
         st.success(f"**Best overall fit:** {name} — {why}")
 
 
+def render_trip_strategy(strategy: dict):
+    if not strategy:
+        return
+
+    st.markdown("## 💡 Your Trip Strategy")
+
+    with st.container(border=True):
+        st.markdown(f"**Best area to stay**  \n{strategy.get('stay_best_area', '')}")
+        if strategy.get("stay_why"):
+            st.write(strategy.get("stay_why", ""))
+
+        st.markdown(f"**How to pace this trip**  \n{strategy.get('pacing_strategy', '')}")
+
+        splurge = strategy.get("splurge_vs_save", {})
+        if splurge:
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"**Where to splurge**  \n{splurge.get('splurge', '')}")
+            with c2:
+                st.markdown(f"**Where to save**  \n{splurge.get('save', '')}")
+
+        st.markdown(f"**What to avoid**  \n{strategy.get('what_to_avoid', '')}")
+        st.markdown(f"**Big moment**  \n{strategy.get('big_moment', '')}")
+
+
 def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
     if not stay_recommendations:
         return
@@ -345,7 +412,7 @@ def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
 
 
 def render_day_plans(days: list[dict]) -> None:
-    st.markdown("## 🌍 Loose Day Plans")
+    st.markdown("## 🌍 Your Days")
 
     for day in days:
         with st.container(border=True):
@@ -361,6 +428,15 @@ def render_day_plans(days: list[dict]) -> None:
             if day.get("booked_anchor"):
                 st.markdown(f"**What’s already locked in**  \n{day.get('booked_anchor', '')}")
 
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Day Type", day.get("day_type", ""))
+            c2.metric("Priority", day.get("priority", ""))
+            c3.metric("Budget", day.get("budget_level", ""))
+
+            st.markdown(f"**Best choice**  \n{day.get('best_choice', '')}")
+            st.markdown(f"**Backup option**  \n{day.get('backup_option', '')}")
+            st.markdown(f"**Skip if tired**  \n{day.get('skip_if_tired', '')}")
+
             st.markdown(f"**Loose day plan**  \n{day.get('loose_day_plan', '')}")
 
             transport = day.get("getting_around", {})
@@ -370,14 +446,13 @@ def render_day_plans(days: list[dict]) -> None:
                     f"{transport.get('mode', '')} — {transport.get('why', '')}"
                 )
 
-            col1, col2 = st.columns(2)
-
-            with col1:
+            c4, c5 = st.columns(2)
+            with c4:
                 st.markdown(f"**Optional add-on**  \n{day.get('optional_add_on', '')}")
-
-            with col2:
+            with c5:
                 st.markdown(f"**Keep it easy**  \n{day.get('keep_it_easy', '')}")
 
+            st.markdown(f"**Why this works**  \n{day.get('why_this_works', '')}")
             st.markdown(f"**The story you’ll tell later**  \n{day.get('this_becomes', '')}")
 
 
@@ -539,6 +614,7 @@ if submitted:
                 intro = result.get("intro", "")
                 stay_recommendations = result.get("stay_recommendations", [])
                 best_pick = result.get("best_overall_pick", {})
+                trip_strategy = result.get("trip_strategy", {})
                 days = result.get("days", [])
 
                 st.divider()
@@ -548,6 +624,7 @@ if submitted:
                     st.caption(intro)
 
                 render_best_pick(best_pick)
+                render_trip_strategy(trip_strategy)
 
                 if need_stay and stay_recommendations:
                     render_stay_recommendations(stay_recommendations)
