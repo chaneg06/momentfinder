@@ -300,7 +300,7 @@ Also include a trip_strategy section at the top with:
 
 For each day include:
 - day_type (Easy, Balanced, Full, Reset)
-- priority (Must, Nice, Optional)
+- priority (Protect This, Worth It, Only If It Flows)
 - budget_level (Low, Medium, Splurge)
 - best_choice
 - backup_option
@@ -705,7 +705,7 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 story.append(Paragraph("Typical nightly range", label_style))
                 story.append(
                     Paragraph(
-                        f"Budget: {price.get('budget', '')}<br/>"
+                        f"Spend Feel: {price.get('budget', '')}<br/>"
                         f"Mid-range: {price.get('mid_range', '')}<br/>"
                         f"Luxury: {price.get('luxury', '')}",
                         body_style,
@@ -738,7 +738,7 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
             story.append(Paragraph("Day shape", label_style))
             story.append(
                 Paragraph(
-                    f"Day Type: {day.get('day_type', '')}<br/>"
+                    f"Day Pace: {day.get('day_type', '')}<br/>"
                     f"Priority: {day.get('priority', '')}<br/>"
                     f"Budget: {day.get('budget_level', '')}",
                     body_style,
@@ -1027,7 +1027,7 @@ def render_day_plans(days: list[dict]) -> None:
 
             m1, m2, m3 = st.columns(3)
             m1.metric("Day Type", day.get("day_type", ""))
-            m2.metric("Priority", day.get("priority", ""))
+            m2.metric("How much to protect this day", day.get("priority", ""))
             m3.metric("Budget", day.get("budget_level", ""))
 
             c1, c2 = st.columns(2)
