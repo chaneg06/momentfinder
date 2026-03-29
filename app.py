@@ -1214,6 +1214,7 @@ def get_experience_profile(group_type, curiosity, vibe):
 # -----------------------------
 # UI
 # -----------------------------
+experience_profile = "balanced"
 render_hero()
 render_before_after()
 
@@ -1368,6 +1369,7 @@ request_signature = make_request_signature(
     need_stay=need_stay,
     stay_preferences=stay_preferences,
 )
+experience_profile = get_experience_profile(group_type, curiosity, vibe)
 
 if submitted:
     if trip_mode == "Single destination" and not destination.strip():
@@ -1375,7 +1377,6 @@ if submitted:
     elif trip_mode != "Single destination" and not itinerary_text.strip():
         st.warning("Please paste your itinerary.")
     else:
-        experience_profile = get_experience_profile(group_type, curiosity, vibe)
         user_prompt = build_user_prompt(
             trip_mode=trip_mode,
             destination=destination,
