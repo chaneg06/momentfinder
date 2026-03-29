@@ -347,13 +347,16 @@ st.write(
     "Tell me a little about your trip and your people, and I’ll suggest experiences that feel like **you**."
 )
 
-with st.form("moment_finder_form"):
-    trip_mode = st.radio(
-        "Trip type",
-        ["Single destination", "Cruise / Multi-stop trip"],
-        horizontal=True,
-    )
+# Put dynamic controls OUTSIDE the form so the UI updates immediately
+trip_mode = st.radio(
+    "Trip type",
+    ["Single destination", "Cruise / Multi-stop trip"],
+    horizontal=True,
+)
 
+need_stay = st.checkbox("Help me figure out where to stay")
+
+with st.form("moment_finder_form"):
     destination = ""
     itinerary_text = ""
 
@@ -376,6 +379,15 @@ August 4 - Dubrovnik
 August 5 - Venice""",
             height=180,
         )
+
+    if need_stay:
+        stay_preferences = st.text_area(
+            "What kind of stay are you looking for?",
+            placeholder="Walkable, nightlife, quiet, central, near water, luxury, budget-friendly, family-friendly...",
+            height=100,
+        )
+    else:
+        stay_preferences = ""
 
     who_for = st.selectbox(
         "Who is this for?",
@@ -441,17 +453,6 @@ Red Light District - one night""",
         placeholder="Doesn't like rushing, mobility concerns, prefers scenic not strenuous, loves food, wants easy walking...",
         height=100,
     )
-
-    need_stay = st.checkbox("Help me figure out where to stay")
-
-    if need_stay:
-        stay_preferences = st.text_area(
-            "What kind of stay are you looking for?",
-            placeholder="Walkable, nightlife, quiet, central, near water, luxury, budget-friendly, family-friendly...",
-            height=100,
-        )
-    else:
-        stay_preferences = ""
 
     submitted = st.form_submit_button("Create My Experiences")
 
