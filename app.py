@@ -1,8 +1,6 @@
 import os
 import json
 from io import BytesIO
-from urllib.parse import quote_plus
-
 from dotenv import load_dotenv
 import streamlit as st
 from openai import OpenAI
@@ -39,6 +37,7 @@ st.set_page_config(
     page_icon="✨",
     layout="wide",
 )
+
 if "generated_result" not in st.session_state:
     st.session_state.generated_result = None
 
@@ -46,7 +45,7 @@ if "last_request_signature" not in st.session_state:
     st.session_state.last_request_signature = None
 
 # -----------------------------
-# Page styles
+# Styles
 # -----------------------------
 st.markdown("""
 <style>
@@ -56,7 +55,7 @@ st.markdown("""
     }
 
     .block-container {
-        max-width: 900px;
+        max-width: 920px;
         padding-top: 2rem;
         padding-bottom: 4rem;
     }
@@ -127,13 +126,13 @@ st.markdown("""
         line-height: 1.6;
     }
 
-    .mini-card {
-        padding: 1rem 1.1rem;
-        border-radius: 18px;
+    .card {
+        padding: 1.2rem 1.3rem;
+        border-radius: 20px;
         background: white;
         border: 1px solid rgba(20,20,20,0.06);
         box-shadow: 0 8px 20px rgba(0,0,0,0.03);
-        margin-bottom: 0.8rem;
+        margin-bottom: 1rem;
     }
 
     .label {
@@ -157,13 +156,6 @@ st.markdown("""
         margin: 1.7rem 0;
     }
 
-    .meta {
-        font-size: 0.9rem;
-        color: #6b647a;
-        margin-bottom: 0.85rem;
-        font-weight: 500;
-    }
-
     .pill {
         display: inline-block;
         padding: 0.32rem 0.68rem;
@@ -174,15 +166,6 @@ st.markdown("""
         margin-right: 0.4rem;
         margin-bottom: 0.5rem;
         font-weight: 500;
-    }
-
-    .result-card {
-        padding: 1.35rem 1.45rem;
-        border-radius: 22px;
-        background: white;
-        border: 1px solid rgba(20,20,20,0.06);
-        box-shadow: 0 10px 24px rgba(0,0,0,0.03);
-        margin-bottom: 1rem;
     }
 
     .preview-note {
@@ -257,7 +240,7 @@ Tone and voice:
 - Make it feel human, not like a travel brochure.
 - Make the user feel like: "this feels like us."
 
-Do not assume the user wants a “safe” or “typical” trip.
+Do not assume the user wants a safe or typical trip.
 Instead:
 - Assume they are curious
 - Assume they are open to something different
@@ -293,16 +276,19 @@ They are:
 - interested in unique, slightly unexpected experiences
 - comfortable exploring things that may feel outside the norm
 - more focused on the story than the checklist
+
 Guidelines:
 - Include at least one unexpected, conversation-worthy, or slightly edgy moment in each trip or day when appropriate.
 - Do not default to only the most popular or obvious attractions.
 - If something is culturally interesting, surprising, or outside the usual comfort zone, consider including it.
 - Normalize experiences that some people might hesitate to include, as long as they are safe and meaningful.
 - These moments should feel intentional, not reckless.
+
 Balance this with:
 - comfort
 - safety
 - realistic pacing
+
 The goal is to create stories people did not expect to have — and end up loving.
 Some of the best moments come from things people were not sure about at first.
 
@@ -348,7 +334,6 @@ If the user wants help deciding where to stay:
   - why_it_fits
   - vibe
   - good_for
-  - image_query
   - price_range with budget / mid_range / luxury
 - use approximate nightly price ranges in USD
 - keep them directional, not real-time
@@ -367,28 +352,17 @@ Also include a trip_strategy section at the top with:
 - what_to_avoid
 - big_moment
 
-
 Important:
-The big_moment must appear in one of the actual day plans.
-The strategy should not introduce ideas that are missing from the daily plans.
-The day plans must support the strategy.
-
-Consistency rule:
-Do not name a big moment unless it is actually reflected in the daily plan structure.
-The trip_strategy and the day plans must align with each other.
-The big_moment must appear explicitly in at least one day's best_choice or loose_day_plan.
-
+- The big_moment must appear in one of the actual day plans.
+- The strategy should not introduce ideas that are missing from the daily plans.
+- The day plans must support the strategy.
+- The big_moment must appear explicitly in at least one day's best_choice or loose_day_plan.
 
 For each day:
-- Include at least one "this is a little different, but worth it" moment when appropriate.
+- Include at least one “this is a little different, but worth it” moment when appropriate.
 - Help the user feel comfortable choosing something slightly outside the norm.
 - Include one moment that feels a little unexpected, bold, or outside the usual plan when appropriate.
 - Frame it in a way that makes the user feel comfortable and intrigued, not pressured.
-
-Examples of framing:
-- "This is one of those things you might not plan — but ends up being a highlight."
-- "If you're open to something a little unexpected..."
-- "This is slightly outside the typical path, but really worth experiencing once."
 
 For each day include:
 - day_type (Easy, Balanced, Full, Reset)
@@ -422,11 +396,8 @@ The user will have one of the following profiles:
   Lean into unique, unexpected, or slightly edgy experiences.
   Include moments that not everyone would choose, but that are memorable and meaningful.
   These should feel intentional, not reckless.
-Adjust the level of “unexpected” or “different” experiences based on this profile.
 
-Image query:
-- Every stay recommendation and day plan should include image_query
-- Use a short, realistic visual search phrase
+Adjust the level of unexpected or different experiences based on this profile.
 
 Output ONLY valid JSON in this format:
 {
@@ -455,7 +426,6 @@ Output ONLY valid JSON in this format:
       "why_it_fits": "Why it fits this group",
       "vibe": "cozy, local, artsy",
       "good_for": "walking, cafés, slower mornings",
-      "image_query": "Jordaan Amsterdam canals",
       "price_range": {
         "budget": "$120-$180",
         "mid_range": "$180-$300",
@@ -470,7 +440,7 @@ Output ONLY valid JSON in this format:
       "timing_context": "Arrival afternoon",
       "booked_anchor": "Canal cruise at 5pm",
       "day_type": "Balanced",
-      "priority": "Must",
+      "priority": "Protect This",
       "budget_level": "Medium",
       "best_choice": "Best recommendation for the day",
       "backup_option": "A realistic backup if plans change",
@@ -483,24 +453,10 @@ Output ONLY valid JSON in this format:
       "optional_add_on": "One realistic extra if energy/time allows",
       "keep_it_easy": "A pacing or caution note",
       "why_this_works": "Why this day shape makes sense",
-      "this_becomes": "The kind of story or memory this could become",
-      "image_query": "Amsterdam canal evening"
+      "this_becomes": "The kind of story or memory this could become"
     }
   ]
 }
-
-Rules:
-- Return day plans for ALL trip types.
-- Single destination: create one day plan per day of the trip.
-- Multi-destination: create one day plan per day/location in the itinerary.
-- Cruise: create one day plan per day/port and include sea days too.
-- Keep each day plan concise but meaningful.
-- Do not overwhelm with too many activities.
-- Avoid stiff phrases like:
-  - "aligns with your preferences"
-  - "proceed to"
-  - "optimize your experience"
-  - "create memorable bonding opportunities"
 """
 
 # -----------------------------
@@ -513,16 +469,8 @@ def call_model(user_prompt: str) -> dict:
             {"role": "system", "content": PROMPT},
             {"role": "user", "content": user_prompt},
         ],
-        text={"format": {"type": "json_object"}},
     )
     return json.loads(response.output_text)
-
-
-def get_image_url(query: str) -> str:
-    if not query:
-        query = "Travel inspiration"
-    safe_query = quote_plus(query)
-    return f"https://placehold.co/1200x700/F7F2FF/4A3F55?text={safe_query}"
 
 
 def build_user_prompt(
@@ -549,7 +497,7 @@ def build_user_prompt(
     keep_in_mind_text = keep_in_mind.strip() if keep_in_mind else "None provided"
     itinerary_clean = itinerary_text.strip() if itinerary_text else "None provided"
     stay_preferences_text = stay_preferences.strip() if stay_preferences else "None provided"
-    
+
     if trip_mode == "Single destination":
         trip_context = f"""
 Trip type: Single destination
@@ -590,9 +538,6 @@ Inspiration they already saw online or elsewhere: {inspiration_text}
 Anything to keep in mind: {keep_in_mind_text}
 {stay_context}
 Experience profile: {experience_profile}
-Voice reminder:
-Write in a warm, real, lightly playful way that feels grounded and human.
-This should feel like a thoughtful recommendation from someone who values joy, flexibility, and story-worthy moments.
 
 Important:
 - Build around any plans already entered.
@@ -607,10 +552,6 @@ Please generate recommendations that feel like a strong fit.
 
 
 def build_pdf(result: dict, full_export: bool = False) -> bytes:
-    """
-    Build a styled PDF export.
-    If full_export=False, only export a preview version.
-    """
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
@@ -642,15 +583,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
         alignment=TA_CENTER,
         textColor=colors.HexColor("#5B6170"),
         spaceAfter=18,
-    )
-
-    title_style = ParagraphStyle(
-        "TitleStyle",
-        parent=styles["Title"],
-        fontSize=22,
-        leading=26,
-        textColor=colors.HexColor("#242638"),
-        spaceAfter=12,
     )
 
     section_style = ParagraphStyle(
@@ -703,15 +635,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
         spaceAfter=8,
     )
 
-    note_style = ParagraphStyle(
-        "NoteStyle",
-        parent=styles["BodyText"],
-        fontSize=10,
-        leading=14,
-        textColor=colors.HexColor("#6B647A"),
-        spaceAfter=8,
-    )
-
     story = []
 
     title = result.get("title", "The Moment Plan")
@@ -724,7 +647,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
     export_days = days if full_export else days[:2]
     export_stay = stay_recommendations if full_export else stay_recommendations[:2]
 
-    # Cover page
     story.append(Spacer(1, 50))
     story.append(Paragraph("The Moment Plan", cover_title_style))
     story.append(Paragraph(title, cover_subtitle_style))
@@ -751,7 +673,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
 
     story.append(PageBreak())
 
-    # Best overall fit
     if best_pick:
         story.append(Paragraph("Best Overall Fit", section_style))
         story.append(
@@ -761,7 +682,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
             )
         )
 
-    # Trip strategy
     if trip_strategy:
         story.append(Paragraph("Trip Strategy", section_style))
 
@@ -793,7 +713,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
             story.append(Paragraph("Big moment", label_style))
             story.append(Paragraph(trip_strategy.get("big_moment", ""), body_style))
 
-    # Stay recommendations
     if export_stay:
         story.append(PageBreak())
         story.append(Paragraph("Where to Stay", section_style))
@@ -805,13 +724,10 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                     subsection_style,
                 )
             )
-
             story.append(Paragraph("Why this area feels right", label_style))
             story.append(Paragraph(area.get("why_it_fits", ""), body_style))
-
             story.append(Paragraph("Neighborhood vibe", label_style))
             story.append(Paragraph(area.get("vibe", ""), body_style))
-
             story.append(Paragraph("Best for", label_style))
             story.append(Paragraph(area.get("good_for", ""), body_style))
 
@@ -820,7 +736,7 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 story.append(Paragraph("Typical nightly range", label_style))
                 story.append(
                     Paragraph(
-                        f"Spend Feel: {price.get('budget', '')}<br/>"
+                        f"Budget: {price.get('budget', '')}<br/>"
                         f"Mid-range: {price.get('mid_range', '')}<br/>"
                         f"Luxury: {price.get('luxury', '')}",
                         body_style,
@@ -829,7 +745,6 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
 
             story.append(Spacer(1, 10))
 
-    # Day plans
     if export_days:
         story.append(PageBreak())
         story.append(Paragraph("Your Days", section_style))
@@ -843,11 +758,11 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
             )
 
             if day.get("timing_context"):
-                story.append(Paragraph("Day context", label_style))
+                story.append(Paragraph("Context", label_style))
                 story.append(Paragraph(day.get("timing_context", ""), body_style))
 
             if day.get("booked_anchor"):
-                story.append(Paragraph("What’s already locked in", label_style))
+                story.append(Paragraph("Locked in", label_style))
                 story.append(Paragraph(day.get("booked_anchor", ""), body_style))
 
             story.append(Paragraph("Day shape", label_style))
@@ -861,19 +776,19 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
             )
 
             if day.get("best_choice"):
-                story.append(Paragraph("Best choice", label_style))
+                story.append(Paragraph("The move", label_style))
                 story.append(Paragraph(day.get("best_choice", ""), body_style))
 
             if day.get("backup_option"):
-                story.append(Paragraph("Backup option", label_style))
+                story.append(Paragraph("Backup", label_style))
                 story.append(Paragraph(day.get("backup_option", ""), body_style))
 
             if day.get("skip_if_tired"):
-                story.append(Paragraph("Skip if tired", label_style))
+                story.append(Paragraph("Skip if needed", label_style))
                 story.append(Paragraph(day.get("skip_if_tired", ""), body_style))
 
             if day.get("loose_day_plan"):
-                story.append(Paragraph("Loose day plan", label_style))
+                story.append(Paragraph("How the day unfolds", label_style))
                 story.append(Paragraph(day.get("loose_day_plan", ""), body_style))
 
             transport = day.get("getting_around", {})
@@ -887,7 +802,7 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 )
 
             if day.get("optional_add_on"):
-                story.append(Paragraph("Optional add-on", label_style))
+                story.append(Paragraph("If you want more", label_style))
                 story.append(Paragraph(day.get("optional_add_on", ""), body_style))
 
             if day.get("keep_it_easy"):
@@ -899,270 +814,16 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 story.append(Paragraph(day.get("why_this_works", ""), body_style))
 
             if day.get("this_becomes"):
-                story.append(Paragraph("The story you’ll tell later", label_style))
+                story.append(Paragraph("What this becomes", label_style))
                 story.append(Paragraph(day.get("this_becomes", ""), body_style))
 
             story.append(Spacer(1, 14))
-
-    if not full_export:
-        story.append(Spacer(1, 12))
-        story.append(
-            Paragraph(
-                "This preview is just the beginning. The full Moment Plan includes every day, the full strategy, and the complete export.",
-                note_style,
-            )
-        )
 
     doc.build(story)
     pdf = buffer.getvalue()
     buffer.close()
     return pdf
 
-
-def render_hero():
-    st.markdown("""
-    <div class="hero">
-        <div class="eyebrow">Private trip design</div>
-        <div class="hero-title">✨ The Moment Plan</div>
-        <div class="hero-subtitle">Plan your trip in a way that actually feels right.</div>
-        <p class="hero-copy">
-            Not a packed itinerary. Not a list of 50 things to do.
-            A clear, personalized plan built around the moments that matter.
-            Because the best trips aren’t perfect — they just work.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="soft-panel">
-        <div class="section-title">Not a generic itinerary.</div>
-        <p class="muted">
-            This is less about doing everything and more about doing the right things — with the right people, in the right rhythm.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("""
-        <div class="mini-card">
-            <div class="label">What it solves</div>
-            <div class="value">Too many options. Not enough clarity.</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with c2:
-        st.markdown("""
-        <div class="mini-card">
-            <div class="label">What it gives</div>
-            <div class="value">A trip that feels thought through without feeling overplanned.</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with c3:
-        st.markdown("""
-        <div class="mini-card">
-            <div class="label">Why it feels premium</div>
-            <div class="value">It gives judgment, pacing, and confidence — not just recommendations.</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-def render_before_after():
-    st.markdown("## ✨ Before vs After")
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.markdown("""
-        <div class="mini-card">
-            <div class="label">Before</div>
-            <div class="value">
-                20 tabs open. No idea where to stay. Everyone wants something different.
-                You’re afraid of wasting time, money, or energy.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with c2:
-        st.markdown("""
-        <div class="mini-card">
-            <div class="label">After</div>
-            <div class="value">
-                You know where to stay, how to pace the trip, what matters most,
-                and what can flex if the day changes.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-def render_sample_preview():
-    st.markdown("## 💎 Sample Moment Plan Preview")
-    st.markdown("""
-    <p class="preview-note">
-        See what a refined plan looks like before you build your own.
-    </p>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="soft-panel">
-        <div class="label">Example</div>
-        <div class="section-title">Amsterdam for a family with adult kids</div>
-        <p class="muted">
-            Built for a group that likes wandering, good food, open-minded experiences,
-            and a trip that feels relaxed but still memorable.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="mini-card">
-        <div class="label">Trip strategy</div>
-        <div class="value">
-            <strong>Best area to stay:</strong> Jordaan<br><br>
-            <strong>How to pace it:</strong> Start lighter, build into fuller days, then leave room for one evening that just unfolds.<br><br>
-            <strong>Where to splurge:</strong> One standout dinner and one memorable experience.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="mini-card">
-        <div class="label">Day 2 — Amsterdam</div>
-        <div class="value">
-            <strong>What’s already locked in:</strong> Canal cruise at 5pm<br><br>
-            <strong>The move:</strong> Wander Jordaan before your cruise and let dinner happen naturally afterward.<br><br>
-            <strong>Getting around:</strong> Walk — the wandering is part of the point.<br><br>
-            <strong>What this becomes:</strong> The day you didn’t force and somehow loved the most.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-def render_best_pick(best_pick: dict):
-    if not best_pick:
-        return
-    name = best_pick.get("name", "")
-    why = best_pick.get("why", "")
-    if name or why:
-        st.markdown(f"""
-        <div class="luxury-soft-card">
-            <div class="luxury-label">Best overall fit</div>
-            <div class="luxury-value"><strong>{name}</strong> — {why}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-
-def render_trip_strategy(strategy: dict):
-    if not strategy:
-        return
-
-    st.markdown("## 💡 The Strategy")
-
-    st.markdown(f"""
-    <div class="result-card">
-        <div class="label">Best area to stay</div>
-        <div class="value"><strong>{strategy.get('stay_best_area', '')}</strong><br>{strategy.get('stay_why', '')}</div>
-
-        <div class="label" style="margin-top:1rem;">How to pace this trip</div>
-        <div class="value">{strategy.get('pacing_strategy', '')}</div>
-
-        <div class="label" style="margin-top:1rem;">Where to splurge</div>
-        <div class="value">{strategy.get('splurge_vs_save', {}).get('splurge', '')}</div>
-
-        <div class="label" style="margin-top:1rem;">Where to save</div>
-        <div class="value">{strategy.get('splurge_vs_save', {}).get('save', '')}</div>
-
-        <div class="label" style="margin-top:1rem;">What to avoid</div>
-        <div class="value">{strategy.get('what_to_avoid', '')}</div>
-
-        <div class="label" style="margin-top:1rem;">The moment</div>
-        <div class="value">{strategy.get('big_moment', '')}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
-    if not stay_recommendations:
-        return
-
-    st.markdown("## 🏡 Where to Stay")
-
-    for area in stay_recommendations:
-        with st.container(border=True):
-            st.markdown(f"### {area.get('area', 'Area')} · {area.get('location', '')}")
-
-            st.markdown(
-                f"<span class='pill'>{area.get('vibe', '')}</span>",
-                unsafe_allow_html=True,
-            )
-
-            c1, c2 = st.columns([2, 1])
-
-            with c1:
-                st.markdown(f"**Why this area feels right**  \n{area.get('why_it_fits', '')}")
-                st.markdown(f"**Best for**  \n{area.get('good_for', '')}")
-
-            with c2:
-                price = area.get("price_range", {})
-                st.metric("Budget", price.get("budget", ""))
-                st.metric("Mid-range", price.get("mid_range", ""))
-                st.metric("Luxury", price.get("luxury", ""))
-
-
-def render_day_plans(days: list[dict]) -> None:
-    st.markdown("## 🌍 Your Days")
-
-    for day in days:
-        with st.container(border=True):
-            st.markdown(f"### {day.get('day_label', 'Day')} — {day.get('location', '')}")
-
-            pills = []
-            if day.get("day_type"):
-                pills.append(day.get("day_type"))
-            if day.get("priority"):
-                pills.append(day.get("priority"))
-            if day.get("budget_level"):
-                pills.append(day.get("budget_level"))
-
-            if pills:
-                st.markdown(
-                    " ".join([f"<span class='pill'>{p}</span>" for p in pills]),
-                    unsafe_allow_html=True,
-                )
-
-            if day.get("timing_context"):
-                st.markdown(f"**Context**  \n{day.get('timing_context')}")
-
-            if day.get("booked_anchor"):
-                st.markdown(f"**Locked in**  \n{day.get('booked_anchor')}")
-
-            st.markdown("**The move**")
-            st.write(day.get("best_choice", ""))
-
-            st.markdown("**How the day unfolds**")
-            st.write(day.get("loose_day_plan", ""))
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown("**Backup**")
-                st.write(day.get("backup_option", ""))
-
-                st.markdown("**Skip if needed**")
-                st.write(day.get("skip_if_tired", ""))
-
-            with col2:
-                st.markdown("**Getting around**")
-                transport = day.get("getting_around", {})
-                st.write(f"{transport.get('mode', '')} — {transport.get('why', '')}")
-
-                st.markdown("**If you want more**")
-                st.write(day.get("optional_add_on", ""))
-
-            st.markdown("**Keep it easy**")
-            st.write(day.get("keep_it_easy", ""))
-
-            st.markdown("**Why this works**")
-            st.write(day.get("why_this_works", ""))
-
-            st.markdown("**What this becomes**")
-            st.write(day.get("this_becomes", ""))
 
 def make_request_signature(
     trip_mode,
@@ -1200,19 +861,18 @@ def make_request_signature(
         sort_keys=True,
     )
 
+
 def get_experience_profile(group_type, curiosity, vibe):
     score = 0
 
-    # Group type signals
     if group_type:
-        if "unique / different experiences" in group_type:
+        if "We like unique / different experiences" in group_type:
             score += 2
-        if "open-minded / curious" in group_type:
+        if "We're open-minded / curious" in group_type:
             score += 2
-        if "explore and wander" in group_type:
+        if "We like to explore and wander" in group_type:
             score += 1
 
-    # Curiosity text signals
     text = (curiosity or "").lower()
 
     edgy_keywords = [
@@ -1223,33 +883,294 @@ def get_experience_profile(group_type, curiosity, vibe):
         "hidden",
         "underground",
         "local",
+        "unexpected",
     ]
 
     for word in edgy_keywords:
         if word in text:
             score += 2
 
-    # Vibe signal
     if vibe in ["Adventure", "Creative"]:
         score += 1
 
-    # Determine profile
     if score >= 5:
         return "bold"
     elif score >= 3:
         return "open"
     else:
         return "balanced"
-    
+
+
 # -----------------------------
-# UI
+# Render functions
 # -----------------------------
-experience_profile = "balanced"
+def render_hero():
+    st.markdown("""
+    <div class="hero">
+        <div class="eyebrow">Private trip design</div>
+        <div class="hero-title">✨ The Moment Plan</div>
+        <div class="hero-subtitle">Plan your trip in a way that actually feels right.</div>
+        <p class="hero-copy">
+            Not a packed itinerary. Not a list of 50 things to do.
+            A clear, personalized plan built around the moments that matter.
+            Because the best trips aren’t perfect — they just work.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="soft-panel">
+        <div class="section-title">Not a generic itinerary.</div>
+        <p class="muted">
+            This is less about doing everything and more about doing the right things — with the right people, in the right rhythm.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("""
+        <div class="card">
+            <div class="label">What it solves</div>
+            <div class="value">Too many options. Not enough clarity.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with c2:
+        st.markdown("""
+        <div class="card">
+            <div class="label">What it gives</div>
+            <div class="value">A trip that feels thought through without feeling overplanned.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="card">
+            <div class="label">Why it feels premium</div>
+            <div class="value">It gives judgment, pacing, and confidence — not just recommendations.</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+def render_before_after():
+    st.markdown("## ✨ Before vs After")
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("""
+        <div class="card">
+            <div class="label">Before</div>
+            <div class="value">
+                20 tabs open. No idea where to stay. Everyone wants something different.
+                You’re afraid of wasting time, money, or energy.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="card">
+            <div class="label">After</div>
+            <div class="value">
+                You know where to stay, how to pace the trip, what matters most,
+                and what can flex if the day changes.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+def render_sample_preview():
+    st.markdown("## 💎 Sample Moment Plan Preview")
+    st.markdown("""
+    <p class="preview-note">
+        See what a refined plan looks like before you build your own.
+    </p>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="soft-panel">
+        <div class="label">Example</div>
+        <div class="section-title">Amsterdam for a family with adult kids</div>
+        <p class="muted">
+            Built for a group that likes wandering, good food, open-minded experiences,
+            and a trip that feels relaxed but still memorable.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="card">
+        <div class="label">Trip strategy</div>
+        <div class="value">
+            <strong>Best area to stay:</strong> Jordaan<br><br>
+            <strong>How to pace it:</strong> Start lighter, build into fuller days, then leave room for one evening that just unfolds.<br><br>
+            <strong>Where to splurge:</strong> One standout dinner and one memorable experience.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="card">
+        <div class="label">Day 2 — Amsterdam</div>
+        <div class="value">
+            <strong>What’s already locked in:</strong> Canal cruise at 5pm<br><br>
+            <strong>The move:</strong> Wander Jordaan before your cruise and let dinner happen naturally afterward.<br><br>
+            <strong>Getting around:</strong> Walk — the wandering is part of the point.<br><br>
+            <strong>What this becomes:</strong> The day you didn’t force and somehow loved the most.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_best_pick(best_pick: dict):
+    if not best_pick:
+        return
+
+    name = best_pick.get("name", "")
+    why = best_pick.get("why", "")
+
+    if name or why:
+        st.html(f"""
+        <div class="soft-panel">
+            <div class="label">Best overall fit</div>
+            <div class="value"><strong>{name}</strong> — {why}</div>
+        </div>
+        """)
+
+
+def render_trip_strategy(strategy: dict):
+    if not strategy:
+        return
+
+    splurge = strategy.get("splurge_vs_save", {})
+
+    st.markdown("## 💡 The Strategy")
+
+    st.html(f"""
+    <div class="card">
+        <div class="label">Best area to stay</div>
+        <div class="value"><strong>{strategy.get('stay_best_area', '')}</strong><br>{strategy.get('stay_why', '')}</div>
+
+        <div class="label" style="margin-top:1rem;">How to pace this trip</div>
+        <div class="value">{strategy.get('pacing_strategy', '')}</div>
+
+        <div class="label" style="margin-top:1rem;">Where to splurge</div>
+        <div class="value">{splurge.get('splurge', '')}</div>
+
+        <div class="label" style="margin-top:1rem;">Where to save</div>
+        <div class="value">{splurge.get('save', '')}</div>
+
+        <div class="label" style="margin-top:1rem;">What to avoid</div>
+        <div class="value">{strategy.get('what_to_avoid', '')}</div>
+
+        <div class="label" style="margin-top:1rem;">The moment</div>
+        <div class="value">{strategy.get('big_moment', '')}</div>
+    </div>
+    """)
+
+
+def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
+    if not stay_recommendations:
+        return
+
+    st.markdown("## 🏡 Where to Stay")
+
+    for area in stay_recommendations:
+        with st.container(border=True):
+            st.markdown(f"### {area.get('area', 'Area')} · {area.get('location', '')}")
+
+            vibe = area.get("vibe", "")
+            if vibe:
+                st.markdown(
+                    f"<span class='pill'>{vibe}</span>",
+                    unsafe_allow_html=True,
+                )
+
+            c1, c2 = st.columns([2, 1])
+
+            with c1:
+                st.markdown("**Why this area feels right**")
+                st.write(area.get("why_it_fits", ""))
+
+                st.markdown("**Best for**")
+                st.write(area.get("good_for", ""))
+
+            with c2:
+                price = area.get("price_range", {})
+                st.metric("Budget", price.get("budget", ""))
+                st.metric("Mid-range", price.get("mid_range", ""))
+                st.metric("Luxury", price.get("luxury", ""))
+
+
+def render_day_plans(days: list[dict]) -> None:
+    st.markdown("## 🌍 Your Days")
+
+    for day in days:
+        with st.container(border=True):
+            st.markdown(f"### {day.get('day_label', 'Day')} — {day.get('location', '')}")
+
+            pills = []
+            if day.get("day_type"):
+                pills.append(day.get("day_type"))
+            if day.get("priority"):
+                pills.append(day.get("priority"))
+            if day.get("budget_level"):
+                pills.append(day.get("budget_level"))
+
+            if pills:
+                st.markdown(
+                    " ".join([f"<span class='pill'>{p}</span>" for p in pills]),
+                    unsafe_allow_html=True,
+                )
+
+            if day.get("timing_context"):
+                st.markdown("**Context**")
+                st.write(day.get("timing_context", ""))
+
+            if day.get("booked_anchor"):
+                st.markdown("**Locked in**")
+                st.write(day.get("booked_anchor", ""))
+
+            st.markdown("**The move**")
+            st.write(day.get("best_choice", ""))
+
+            st.markdown("**How the day unfolds**")
+            st.write(day.get("loose_day_plan", ""))
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("**Backup**")
+                st.write(day.get("backup_option", ""))
+
+                st.markdown("**Skip if needed**")
+                st.write(day.get("skip_if_tired", ""))
+
+            with col2:
+                st.markdown("**Getting around**")
+                transport = day.get("getting_around", {})
+                st.write(f"{transport.get('mode', '')} — {transport.get('why', '')}")
+
+                st.markdown("**If you want more**")
+                st.write(day.get("optional_add_on", ""))
+
+            st.markdown("**Keep it easy**")
+            st.write(day.get("keep_it_easy", ""))
+
+            st.markdown("**Why this works**")
+            st.write(day.get("why_this_works", ""))
+
+            st.markdown("**What this becomes**")
+            st.write(day.get("this_becomes", ""))
+
+
+# -----------------------------
+# Page layout
+# -----------------------------
 render_hero()
 render_before_after()
 render_sample_preview()
 
-st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 top_left, top_right = st.columns([2, 1])
 
@@ -1392,6 +1313,7 @@ request_signature = make_request_signature(
     need_stay=need_stay,
     stay_preferences=stay_preferences,
 )
+
 experience_profile = get_experience_profile(group_type, curiosity, vibe)
 
 if submitted:
@@ -1417,7 +1339,7 @@ if submitted:
             stay_preferences=stay_preferences,
             experience_profile=experience_profile,
         )
-        
+
         with st.spinner("Designing your trip so it actually flows..."):
             try:
                 result = call_model(user_prompt)
@@ -1426,14 +1348,12 @@ if submitted:
             except Exception as e:
                 st.error(f"Something went wrong: {e}")
 
-# If inputs changed after a result existed, clear the old result
 if (
     st.session_state.generated_result is not None
     and st.session_state.last_request_signature != request_signature
 ):
     st.session_state.generated_result = None
 
-# Render results from session state
 if st.session_state.generated_result is not None:
     result = st.session_state.generated_result
 
@@ -1450,7 +1370,7 @@ if st.session_state.generated_result is not None:
     preview_stay = stay_recommendations if is_unlocked else stay_recommendations[:2]
     preview_days = days if is_unlocked else days[:2]
 
-    st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown(f"# {title}")
 
     if intro:
