@@ -39,6 +39,11 @@ st.set_page_config(
     page_icon="✨",
     layout="wide",
 )
+if "generated_result" not in st.session_state:
+    st.session_state.generated_result = None
+
+if "last_request_signature" not in st.session_state:
+    st.session_state.last_request_signature = None
 
 # -----------------------------
 # Page styles
@@ -1061,7 +1066,41 @@ def render_day_plans(days: list[dict]) -> None:
 
             st.markdown("**The story you’ll tell later**")
             st.write(day.get("this_becomes", ""))
-
+def make_request_signature(
+    trip_mode,
+    destination,
+    trip_length,
+    itinerary_text,
+    who_for,
+    ages,
+    group_type,
+    vibe,
+    curiosity,
+    existing_plans,
+    inspiration_input,
+    keep_in_mind,
+    need_stay,
+    stay_preferences,
+):
+    return json.dumps(
+        {
+            "trip_mode": trip_mode,
+            "destination": destination,
+            "trip_length": trip_length,
+            "itinerary_text": itinerary_text,
+            "who_for": who_for,
+            "ages": ages,
+            "group_type": group_type,
+            "vibe": vibe,
+            "curiosity": curiosity,
+            "existing_plans": existing_plans,
+            "inspiration_input": inspiration_input,
+            "keep_in_mind": keep_in_mind,
+            "need_stay": need_stay,
+            "stay_preferences": stay_preferences,
+        },
+        sort_keys=True,
+    )
 
 # -----------------------------
 # UI
@@ -1203,6 +1242,23 @@ Day 4 - Dinner reservation at 7pm""",
 # -----------------------------
 # Run generation
 # -----------------------------
+request_signature = make_request_signature(
+    trip_mode=trip_mode,
+    destination=destination,
+    trip_length=trip_length,
+    itinerary_text=itinerary_text,
+    who_for=who_for,
+    ages=ages,
+    group_type=group_type,
+    vibe=vibe,
+    curiosity=curiosity,
+    existing_plans=existing_plans,
+    inspiration_input=inspiration_input,
+    keep_in_mind=keep_in_mind,
+    need_stay=need_stay,
+    stay_preferences=stay_preferences,
+)
+
 if submitted:
     if trip_mode == "Single destination" and not destination.strip():
         st.warning("Please enter a destination.")
@@ -1229,38 +1285,52 @@ if submitted:
         with st.spinner("Designing your trip so it actually flows..."):
             try:
                 result = call_model(user_prompt)
+                st.session_state.generated_result = result
+                st.session_state.last_request_signature = request_signature
+            except Exception as e:
+                st.error(f"Something went wrong: {e}")
 
-                title = result.get("title", "The Moment Plan")
-                intro = result.get("intro", "")
-                stay_recommendations = result.get("stay_recommendations", [])
-                best_pick = result.get("best_overall_pick", {})
-                trip_strategy = result.get("trip_strategy", {})
-                days = result.get("days", [])
+# If inputs changed after a result existed, clear the old result
+if (
+    st.session_state.generated_result is not None
+    and st.session_state.last_request_signature != request_signature
+):
+    st.session_state.generated_result = None
 
-                access_code = st.text_input("Enter access code to unlock the full plan", type="password")
-                is_unlocked = access_code == "moment"
+    if st.session_state.generated_result is not None:
+    result = st.session_state.generated_result
 
-                preview_stay = stay_recommendations if is_unlocked else stay_recommendations[:2]
-                preview_days = days if is_unlocked else days[:2]
+    title = result.get("title", "The Moment Plan")
+    intro = result.get("intro", "")
+    stay_recommendations = result.get("stay_recommendations", [])
+    best_pick = result.get("best_overall_pick", {})
+    trip_strategy = result.get("trip_strategy", {})
+    days = result.get("days", [])
 
-                st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
-                st.markdown(f"# {title}")
+    access_code = st.text_input("Enter access code to unlock the full plan", type="password")
+    is_unlocked = access_code == "moment"
 
-                if intro:
-                    st.caption(intro)
+    preview_stay = stay_recommendations if is_unlocked else stay_recommendations[:2]
+    preview_days = days if is_unlocked else days[:2]
 
-                render_best_pick(best_pick)
-                render_trip_strategy(trip_strategy)
+    st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
+    st.markdown(f"# {title}")
 
-                if need_stay and preview_stay:
-                    render_stay_recommendations(preview_stay)
+    if intro:
+        st.caption(intro)
 
-                render_day_plans(preview_days)
+    render_best_pick(best_pick)
+    render_trip_strategy(trip_strategy)
 
-                if not is_unlocked:
-                    st.markdown("---")
-                    st.markdown("## 🔓 Unlock the Full Moment Plan")
-                    st.markdown("""
+    if need_stay and preview_stay:
+        render_stay_recommendations(preview_stay)
+
+    render_day_plans(preview_days)
+
+    if not is_unlocked:
+        st.markdown("---")
+        st.markdown("## 🔓 Unlock the Full Moment Plan")
+        st.markdown("""
 Most people spend hours researching, second-guessing, and still end up unsure.
 
 Unlock the full plan to get:
@@ -1274,26 +1344,23 @@ Unlock the full plan to get:
 ### Get the full plan for $9
 """)
 
-                preview_pdf = build_pdf(result, full_export=False)
+    preview_pdf = build_pdf(result, full_export=False)
 
-                st.download_button(
-                    label="📄 Download Preview PDF",
-                    data=preview_pdf,
-                    file_name="moment_plan_preview.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
+    st.download_button(
+        label="📄 Download Preview PDF",
+        data=preview_pdf,
+        file_name="moment_plan_preview.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
 
-                if is_unlocked:
-                    full_pdf = build_pdf(result, full_export=True)
+    if is_unlocked:
+        full_pdf = build_pdf(result, full_export=True)
 
-                    st.download_button(
-                        label="✨ Download Full Moment Plan PDF",
-                        data=full_pdf,
-                        file_name="the_moment_plan_full.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                    )
-
-            except Exception as e:
-                st.error(f"Something went wrong: {e}")
+        st.download_button(
+            label="✨ Download Full Moment Plan PDF",
+            data=full_pdf,
+            file_name="the_moment_plan_full.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
