@@ -46,7 +46,7 @@ if "last_request_signature" not in st.session_state:
     st.session_state.last_request_signature = None
 
 # -----------------------------
-# Styles
+# Styles - older fuller card version
 # -----------------------------
 st.markdown("""
 <style>
@@ -66,19 +66,19 @@ st.markdown("""
     }
 
     .hero {
-        padding: 2rem 2.1rem;
-        border-radius: 28px;
-        background: linear-gradient(135deg, #f8f2ff 0%, #eef6ff 52%, #fffaf1 100%);
-        border: 1px solid rgba(20,20,20,0.05);
-        box-shadow: 0 12px 30px rgba(0,0,0,0.04);
-        margin-bottom: 1.2rem;
+        padding: 1.8rem 2rem;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #f8f2ff 0%, #eef6ff 55%, #fffaf1 100%);
+        border: 1px solid rgba(20, 20, 20, 0.06);
+        margin-bottom: 1.25rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
     }
 
     .eyebrow {
         text-transform: uppercase;
         letter-spacing: 0.12em;
-        font-size: 0.74rem;
-        color: #6f677d;
+        font-size: 0.75rem;
+        color: #6b647a;
         margin-bottom: 0.5rem;
         font-weight: 600;
     }
@@ -92,16 +92,16 @@ st.markdown("""
     }
 
     .hero-subtitle {
-        font-size: 1.15rem;
-        color: #404657;
+        font-size: 1.18rem;
+        color: #3e4352;
         margin-bottom: 0.9rem;
         font-weight: 500;
     }
 
     .hero-copy {
         font-size: 1rem;
-        color: #5c6270;
-        line-height: 1.75;
+        color: #5b6170;
+        line-height: 1.7;
         max-width: 720px;
         margin: 0;
     }
@@ -109,7 +109,7 @@ st.markdown("""
     .luxury-card {
         padding: 1.35rem 1.4rem;
         border-radius: 22px;
-        border: 1px solid rgba(20,20,20,0.06);
+        border: 1px solid rgba(20, 20, 20, 0.06);
         background: white;
         box-shadow: 0 10px 22px rgba(0,0,0,0.035);
         margin-top: 1rem;
@@ -135,7 +135,24 @@ st.markdown("""
     .luxury-muted {
         color: #6a6f7a;
         font-size: 0.95rem;
-        line-height: 1.6;
+    }
+
+    .luxury-divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(36,38,56,0.13), transparent);
+        margin: 1.5rem 0 1.5rem 0;
+    }
+
+    .luxury-pill {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: #f3eefc;
+        color: #51476a;
+        font-size: 0.84rem;
+        margin-right: 0.45rem;
+        margin-bottom: 0.65rem;
+        font-weight: 500;
     }
 
     .luxury-label {
@@ -153,28 +170,10 @@ st.markdown("""
         line-height: 1.65;
     }
 
-    .luxury-divider {
-        height: 1px;
-        background: linear-gradient(to right, transparent, rgba(36,38,56,0.13), transparent);
-        margin: 1.5rem 0 1.5rem 0;
-    }
-
-    .pill {
-        display: inline-block;
-        padding: 0.32rem 0.68rem;
-        border-radius: 999px;
-        background: #f3eefc;
-        color: #51476a;
-        font-size: 0.83rem;
-        margin-right: 0.4rem;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-    }
-
     .preview-note {
         font-size: 0.92rem;
         color: #6a6f7a;
-        margin-top: -0.1rem;
+        margin-top: -0.25rem;
         margin-bottom: 1rem;
     }
 
@@ -906,12 +905,12 @@ def get_experience_profile(group_type, curiosity, vibe):
 
 
 # -----------------------------
-# Render functions
+# Render functions - older card style
 # -----------------------------
 def render_hero():
     st.markdown("""
     <div class="hero">
-        <div class="eyebrow">Private trip design</div>
+        <div class="eyebrow">Luxury travel clarity</div>
         <div class="hero-title">✨ The Moment Plan</div>
         <div class="hero-subtitle">Plan your trip in a way that actually feels right.</div>
         <p class="hero-copy">
@@ -925,7 +924,7 @@ def render_hero():
     st.markdown("""
     <div class="luxury-soft-card">
         <div class="luxury-section-title">Not a generic itinerary.</div>
-        <p class="luxury-muted">
+        <p class="hero-copy" style="max-width:780px;">
             This helps you shape each day around your vibe, your people, and the kind of memories you actually want to create.
         </p>
     </div>
@@ -935,28 +934,29 @@ def render_hero():
     with c1:
         st.markdown("""
         <div class="luxury-card">
-            <div class="luxury-label">What it solves</div>
-            <div class="luxury-value">Too many options. Not enough clarity.</div>
+            <div class="luxury-label">What it does</div>
+            <div class="luxury-value">Turns scattered ideas into a trip that actually flows.</div>
         </div>
         """, unsafe_allow_html=True)
     with c2:
         st.markdown("""
         <div class="luxury-card">
-            <div class="luxury-label">What it gives</div>
-            <div class="luxury-value">A trip that feels thought through without feeling overplanned.</div>
+            <div class="luxury-label">What it avoids</div>
+            <div class="luxury-value">Overplanning, wasted time, and expensive wrong turns.</div>
         </div>
         """, unsafe_allow_html=True)
     with c3:
         st.markdown("""
         <div class="luxury-card">
-            <div class="luxury-label">Why it feels premium</div>
-            <div class="luxury-value">It gives judgment, pacing, and confidence — not just recommendations.</div>
+            <div class="luxury-label">Why it feels different</div>
+            <div class="luxury-value">It gives judgment, pacing, and confidence — not just options.</div>
         </div>
         """, unsafe_allow_html=True)
 
 
 def render_before_after():
     st.markdown("## ✨ Before vs After")
+
     c1, c2 = st.columns(2)
 
     with c1:
@@ -984,45 +984,57 @@ def render_before_after():
 
 def render_sample_preview():
     st.markdown("## 💎 Sample Moment Plan Preview")
-    st.markdown("""
+
+    st.html("""
     <p class="preview-note">
         See what a refined plan looks like before you build your own.
     </p>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    st.html("""
     <div class="luxury-soft-card">
         <div class="luxury-label">Example</div>
         <div class="luxury-section-title">Amsterdam for a family with adult kids</div>
-        <p class="luxury-muted">
-            Built for a group that likes wandering, good food, open-minded experiences,
-            and a trip that feels relaxed but still memorable.
+        <p class="hero-copy">
+            Built for a group that likes wandering, good food, open-minded experiences, and a trip that feels relaxed but still memorable.
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    st.html("""
     <div class="luxury-card">
-        <div class="luxury-label">Trip strategy</div>
+        <div class="luxury-label">Trip Strategy</div>
         <div class="luxury-value">
             <strong>Best area to stay:</strong> Jordaan<br><br>
-            <strong>How to pace it:</strong> Start lighter, build into fuller days, then leave room for one evening that just unfolds.<br><br>
-            <strong>Where to splurge:</strong> One standout dinner and one memorable experience.
+            <strong>How to pace it:</strong> Start lighter, build into fuller days, then leave room for one night that just unfolds.<br><br>
+            <strong>Where to splurge:</strong> One standout dinner and one unforgettable evening experience.<br><br>
+            <strong>Where to save:</strong> Keep breakfast simple and don’t overbook attractions.
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
-    st.markdown("""
+    st.html("""
     <div class="luxury-card">
         <div class="luxury-label">Day 2 — Amsterdam</div>
         <div class="luxury-value">
-            <strong>What’s already locked in:</strong> Canal cruise at 5pm<br><br>
-            <strong>The move:</strong> Wander Jordaan before your cruise and let dinner happen naturally afterward.<br><br>
-            <strong>Getting around:</strong> Walk — the wandering is part of the point.<br><br>
-            <strong>What this becomes:</strong> The day you didn’t force and somehow loved the most.
+            <strong>Day Type:</strong> Balanced &nbsp; • &nbsp;
+            <strong>Priority:</strong> Protect This &nbsp; • &nbsp;
+            <strong>Budget:</strong> Medium<br><br>
+
+            <strong>What’s already locked in:</strong><br>
+            Canal cruise at 5pm<br><br>
+
+            <strong>Best choice:</strong><br>
+            Wander Jordaan before your cruise and let dinner happen afterward instead of forcing too much into the day.<br><br>
+
+            <strong>Getting around:</strong><br>
+            Walk — everything feels close, and part of the charm is the wandering.<br><br>
+
+            <strong>The story you’ll tell later:</strong><br>
+            “This was the day we didn’t try too hard and somehow it ended up being perfect.”
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
 def render_best_pick(best_pick: dict):
@@ -1047,7 +1059,7 @@ def render_trip_strategy(strategy: dict):
 
     splurge = strategy.get("splurge_vs_save", {})
 
-    st.markdown("## 💡 The Strategy")
+    st.markdown("## 💡 Your Trip Strategy")
 
     st.html(f"""
     <div class="luxury-card">
@@ -1066,7 +1078,7 @@ def render_trip_strategy(strategy: dict):
         <div class="luxury-label" style="margin-top:1rem;">What to avoid</div>
         <div class="luxury-value">{strategy.get('what_to_avoid', '')}</div>
 
-        <div class="luxury-label" style="margin-top:1rem;">The moment</div>
+        <div class="luxury-label" style="margin-top:1rem;">Big moment</div>
         <div class="luxury-value">{strategy.get('big_moment', '')}</div>
     </div>
     """)
@@ -1085,7 +1097,7 @@ def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
             vibe = area.get("vibe", "")
             if vibe:
                 st.markdown(
-                    f"<span class='pill'>{vibe}</span>",
+                    f"<span class='luxury-pill'>{vibe}</span>",
                     unsafe_allow_html=True,
                 )
 
@@ -1100,6 +1112,7 @@ def render_stay_recommendations(stay_recommendations: list[dict]) -> None:
 
             with c2:
                 price = area.get("price_range", {})
+                st.markdown("**Typical nightly range**")
                 st.metric("Budget", price.get("budget", ""))
                 st.metric("Mid-range", price.get("mid_range", ""))
                 st.metric("Luxury", price.get("luxury", ""))
@@ -1110,7 +1123,7 @@ def render_day_plans(days: list[dict]) -> None:
 
     for day in days:
         with st.container(border=True):
-            st.markdown(f"### {day.get('day_label', 'Day')} — {day.get('location', '')}")
+            st.markdown(f"## 🌍 {day.get('day_label', 'Day')} — {day.get('location', '')}")
 
             pills = []
             if day.get("day_type"):
@@ -1122,39 +1135,37 @@ def render_day_plans(days: list[dict]) -> None:
 
             if pills:
                 st.markdown(
-                    " ".join([f"<span class='pill'>{p}</span>" for p in pills]),
+                    " ".join([f"<span class='luxury-pill'>{p}</span>" for p in pills]),
                     unsafe_allow_html=True,
                 )
 
             if day.get("timing_context"):
-                st.markdown("**Context**")
-                st.write(day.get("timing_context", ""))
+                st.markdown(f"**Day context**  \n{day.get('timing_context', '')}")
 
             if day.get("booked_anchor"):
-                st.markdown("**Locked in**")
-                st.write(day.get("booked_anchor", ""))
+                st.markdown(f"**What’s already locked in**  \n{day.get('booked_anchor', '')}")
 
-            st.markdown("**The move**")
-            st.write(day.get("best_choice", ""))
+            c1, c2 = st.columns(2)
 
-            st.markdown("**How the day unfolds**")
-            st.write(day.get("loose_day_plan", ""))
+            with c1:
+                st.markdown("**Best choice**")
+                st.write(day.get("best_choice", ""))
 
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown("**Backup**")
+                st.markdown("**Backup option**")
                 st.write(day.get("backup_option", ""))
 
-                st.markdown("**Skip if needed**")
+                st.markdown("**Skip if tired**")
                 st.write(day.get("skip_if_tired", ""))
 
-            with col2:
+            with c2:
+                st.markdown("**Loose day plan**")
+                st.write(day.get("loose_day_plan", ""))
+
                 st.markdown("**Getting around**")
                 transport = day.get("getting_around", {})
                 st.write(f"{transport.get('mode', '')} — {transport.get('why', '')}")
 
-                st.markdown("**If you want more**")
+                st.markdown("**Optional add-on**")
                 st.write(day.get("optional_add_on", ""))
 
             st.markdown("**Keep it easy**")
@@ -1163,7 +1174,7 @@ def render_day_plans(days: list[dict]) -> None:
             st.markdown("**Why this works**")
             st.write(day.get("why_this_works", ""))
 
-            st.markdown("**What this becomes**")
+            st.markdown("**The story you’ll tell later**")
             st.write(day.get("this_becomes", ""))
 
 
