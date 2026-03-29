@@ -1297,8 +1297,9 @@ if (
 ):
     st.session_state.generated_result = None
 
-    if st.session_state.generated_result is not None:
-        result = st.session_state.generated_result
+# Render results from session state
+if st.session_state.generated_result is not None:
+    result = st.session_state.generated_result
 
     title = result.get("title", "The Moment Plan")
     intro = result.get("intro", "")
