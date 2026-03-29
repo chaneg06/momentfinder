@@ -1,9 +1,22 @@
 import os
 import json
+from io import BytesIO
 from urllib.parse import quote_plus
+
 from dotenv import load_dotenv
 import streamlit as st
 from openai import OpenAI
+
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib import colors
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    PageBreak,
+)
 
 # -----------------------------
 # Setup
@@ -125,24 +138,11 @@ st.markdown("""
         margin: 1.5rem 0 1.5rem 0;
     }
 
-    .luxury-pill {
-        display: inline-block;
-        padding: 0.35rem 0.7rem;
-        border-radius: 999px;
-        background: #f3eefc;
-        color: #51476a;
-        font-size: 0.84rem;
-        margin-right: 0.45rem;
-        margin-bottom: 0.45rem;
-        font-weight: 500;
-    }
-
-    .luxury-highlight {
-        padding: 1rem 1.15rem;
-        border-radius: 18px;
-        background: #f9f6ff;
-        border: 1px solid rgba(93, 79, 141, 0.08);
-        margin: 0.75rem 0 0.75rem 0;
+    .preview-note {
+        font-size: 0.92rem;
+        color: #6a6f7a;
+        margin-top: -0.25rem;
+        margin-bottom: 1rem;
     }
 
     .luxury-label {
@@ -185,28 +185,6 @@ st.markdown("""
     [data-testid="stCheckbox"] {
         padding-top: 0.35rem;
     }
-    .luxury-grid-gap {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    }
-
-    .sample-badge {
-        display: inline-block;
-        padding: 0.35rem 0.7rem;
-        border-radius: 999px;
-        background: #f3eefc;
-        color: #51476a;
-        font-size: 0.82rem;
-        margin-bottom: 0.75rem;
-        font-weight: 600;
-    }
-
-    .preview-note {
-        font-size: 0.92rem;
-        color: #6a6f7a;
-        margin-top: -0.25rem;
-        margin-bottom: 1rem;
-    }        
 </style>
 """, unsafe_allow_html=True)
 
@@ -513,6 +491,319 @@ Please generate recommendations that feel like a strong fit.
 """.strip()
 
 
+def build_pdf(result: dict, full_export: bool = False) -> bytes:
+    """
+    Build a styled PDF export.
+    If full_export=False, only export a preview version.
+    """
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=42,
+        leftMargin=42,
+        topMargin=42,
+        bottomMargin=42,
+    )
+
+    styles = getSampleStyleSheet()
+
+    cover_title_style = ParagraphStyle(
+        "CoverTitle",
+        parent=styles["Title"],
+        fontSize=28,
+        leading=32,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#242638"),
+        spaceAfter=10,
+    )
+
+    cover_subtitle_style = ParagraphStyle(
+        "CoverSubtitle",
+        parent=styles["BodyText"],
+        fontSize=13,
+        leading=18,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#5B6170"),
+        spaceAfter=18,
+    )
+
+    title_style = ParagraphStyle(
+        "TitleStyle",
+        parent=styles["Title"],
+        fontSize=22,
+        leading=26,
+        textColor=colors.HexColor("#242638"),
+        spaceAfter=12,
+    )
+
+    section_style = ParagraphStyle(
+        "SectionStyle",
+        parent=styles["Heading2"],
+        fontSize=16,
+        leading=20,
+        textColor=colors.HexColor("#3A3D57"),
+        spaceAfter=8,
+        spaceBefore=14,
+    )
+
+    subsection_style = ParagraphStyle(
+        "SubSectionStyle",
+        parent=styles["Heading3"],
+        fontSize=13,
+        leading=17,
+        textColor=colors.HexColor("#3A3D57"),
+        spaceAfter=6,
+        spaceBefore=10,
+    )
+
+    label_style = ParagraphStyle(
+        "LabelStyle",
+        parent=styles["BodyText"],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor("#767084"),
+        spaceAfter=3,
+        spaceBefore=5,
+    )
+
+    body_style = ParagraphStyle(
+        "BodyStyle",
+        parent=styles["BodyText"],
+        fontSize=11,
+        leading=15,
+        textColor=colors.HexColor("#2E3240"),
+        alignment=TA_LEFT,
+        spaceAfter=8,
+    )
+
+    small_style = ParagraphStyle(
+        "SmallStyle",
+        parent=styles["BodyText"],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor("#666666"),
+        alignment=TA_CENTER,
+        spaceAfter=8,
+    )
+
+    note_style = ParagraphStyle(
+        "NoteStyle",
+        parent=styles["BodyText"],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor("#6B647A"),
+        spaceAfter=8,
+    )
+
+    story = []
+
+    title = result.get("title", "The Moment Plan")
+    intro = result.get("intro", "")
+    best_pick = result.get("best_overall_pick", {})
+    trip_strategy = result.get("trip_strategy", {})
+    stay_recommendations = result.get("stay_recommendations", [])
+    days = result.get("days", [])
+
+    export_days = days if full_export else days[:2]
+    export_stay = stay_recommendations if full_export else stay_recommendations[:2]
+
+    # Cover page
+    story.append(Spacer(1, 50))
+    story.append(Paragraph("The Moment Plan", cover_title_style))
+    story.append(Paragraph(title, cover_subtitle_style))
+
+    if intro:
+        story.append(Paragraph(intro, cover_subtitle_style))
+
+    story.append(Spacer(1, 20))
+    story.append(
+        Paragraph(
+            "A personalized trip plan built around the moments that matter.",
+            cover_subtitle_style,
+        )
+    )
+
+    if not full_export:
+        story.append(Spacer(1, 18))
+        story.append(
+            Paragraph(
+                "Preview Version — unlock the full plan for every day, full trip strategy, and the complete export.",
+                small_style,
+            )
+        )
+
+    story.append(PageBreak())
+
+    # Best overall fit
+    if best_pick:
+        story.append(Paragraph("Best Overall Fit", section_style))
+        story.append(
+            Paragraph(
+                f"<b>{best_pick.get('name', '')}</b> — {best_pick.get('why', '')}",
+                body_style,
+            )
+        )
+
+    # Trip strategy
+    if trip_strategy:
+        story.append(Paragraph("Trip Strategy", section_style))
+
+        if trip_strategy.get("stay_best_area"):
+            story.append(Paragraph("Best area to stay", label_style))
+            story.append(
+                Paragraph(
+                    f"{trip_strategy.get('stay_best_area', '')}: {trip_strategy.get('stay_why', '')}",
+                    body_style,
+                )
+            )
+
+        if trip_strategy.get("pacing_strategy"):
+            story.append(Paragraph("How to pace this trip", label_style))
+            story.append(Paragraph(trip_strategy.get("pacing_strategy", ""), body_style))
+
+        splurge = trip_strategy.get("splurge_vs_save", {})
+        if splurge:
+            story.append(Paragraph("Where to splurge", label_style))
+            story.append(Paragraph(splurge.get("splurge", ""), body_style))
+            story.append(Paragraph("Where to save", label_style))
+            story.append(Paragraph(splurge.get("save", ""), body_style))
+
+        if trip_strategy.get("what_to_avoid"):
+            story.append(Paragraph("What to avoid", label_style))
+            story.append(Paragraph(trip_strategy.get("what_to_avoid", ""), body_style))
+
+        if trip_strategy.get("big_moment"):
+            story.append(Paragraph("Big moment", label_style))
+            story.append(Paragraph(trip_strategy.get("big_moment", ""), body_style))
+
+    # Stay recommendations
+    if export_stay:
+        story.append(PageBreak())
+        story.append(Paragraph("Where to Stay", section_style))
+
+        for area in export_stay:
+            story.append(
+                Paragraph(
+                    f"{area.get('area', 'Area')} · {area.get('location', '')}",
+                    subsection_style,
+                )
+            )
+
+            story.append(Paragraph("Why this area feels right", label_style))
+            story.append(Paragraph(area.get("why_it_fits", ""), body_style))
+
+            story.append(Paragraph("Neighborhood vibe", label_style))
+            story.append(Paragraph(area.get("vibe", ""), body_style))
+
+            story.append(Paragraph("Best for", label_style))
+            story.append(Paragraph(area.get("good_for", ""), body_style))
+
+            price = area.get("price_range", {})
+            if price:
+                story.append(Paragraph("Typical nightly range", label_style))
+                story.append(
+                    Paragraph(
+                        f"Budget: {price.get('budget', '')}<br/>"
+                        f"Mid-range: {price.get('mid_range', '')}<br/>"
+                        f"Luxury: {price.get('luxury', '')}",
+                        body_style,
+                    )
+                )
+
+            story.append(Spacer(1, 10))
+
+    # Day plans
+    if export_days:
+        story.append(PageBreak())
+        story.append(Paragraph("Your Days", section_style))
+
+        for day in export_days:
+            story.append(
+                Paragraph(
+                    f"{day.get('day_label', 'Day')} — {day.get('location', 'Location')}",
+                    subsection_style,
+                )
+            )
+
+            if day.get("timing_context"):
+                story.append(Paragraph("Day context", label_style))
+                story.append(Paragraph(day.get("timing_context", ""), body_style))
+
+            if day.get("booked_anchor"):
+                story.append(Paragraph("What’s already locked in", label_style))
+                story.append(Paragraph(day.get("booked_anchor", ""), body_style))
+
+            story.append(Paragraph("Day shape", label_style))
+            story.append(
+                Paragraph(
+                    f"Day Type: {day.get('day_type', '')}<br/>"
+                    f"Priority: {day.get('priority', '')}<br/>"
+                    f"Budget: {day.get('budget_level', '')}",
+                    body_style,
+                )
+            )
+
+            if day.get("best_choice"):
+                story.append(Paragraph("Best choice", label_style))
+                story.append(Paragraph(day.get("best_choice", ""), body_style))
+
+            if day.get("backup_option"):
+                story.append(Paragraph("Backup option", label_style))
+                story.append(Paragraph(day.get("backup_option", ""), body_style))
+
+            if day.get("skip_if_tired"):
+                story.append(Paragraph("Skip if tired", label_style))
+                story.append(Paragraph(day.get("skip_if_tired", ""), body_style))
+
+            if day.get("loose_day_plan"):
+                story.append(Paragraph("Loose day plan", label_style))
+                story.append(Paragraph(day.get("loose_day_plan", ""), body_style))
+
+            transport = day.get("getting_around", {})
+            if transport:
+                story.append(Paragraph("Getting around", label_style))
+                story.append(
+                    Paragraph(
+                        f"{transport.get('mode', '')} — {transport.get('why', '')}",
+                        body_style,
+                    )
+                )
+
+            if day.get("optional_add_on"):
+                story.append(Paragraph("Optional add-on", label_style))
+                story.append(Paragraph(day.get("optional_add_on", ""), body_style))
+
+            if day.get("keep_it_easy"):
+                story.append(Paragraph("Keep it easy", label_style))
+                story.append(Paragraph(day.get("keep_it_easy", ""), body_style))
+
+            if day.get("why_this_works"):
+                story.append(Paragraph("Why this works", label_style))
+                story.append(Paragraph(day.get("why_this_works", ""), body_style))
+
+            if day.get("this_becomes"):
+                story.append(Paragraph("The story you’ll tell later", label_style))
+                story.append(Paragraph(day.get("this_becomes", ""), body_style))
+
+            story.append(Spacer(1, 14))
+
+    if not full_export:
+        story.append(Spacer(1, 12))
+        story.append(
+            Paragraph(
+                "This preview is just the beginning. The full Moment Plan includes every day, the full strategy, and the complete export.",
+                note_style,
+            )
+        )
+
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+    return pdf
+
+
 def render_hero():
     st.markdown("""
     <div class="luxury-hero">
@@ -543,6 +834,7 @@ def render_hero():
         st.markdown('<div class="luxury-card"><div class="luxury-label">What it avoids</div><div class="luxury-value">Overplanning, wasted time, and expensive wrong turns.</div></div>', unsafe_allow_html=True)
     with c3:
         st.markdown('<div class="luxury-card"><div class="luxury-label">Why it feels different</div><div class="luxury-value">It gives judgment, pacing, and confidence — not just options.</div></div>', unsafe_allow_html=True)
+
 
 def render_before_after():
     st.markdown("## ✨ Before vs After")
@@ -576,6 +868,7 @@ def render_before_after():
             </div>
         </div>
         """, unsafe_allow_html=True)
+
 
 def render_sample_preview():
     st.markdown("## 💎 Sample Moment Plan Preview")
@@ -631,6 +924,7 @@ def render_sample_preview():
         </div>
     </div>
     """)
+
 
 def render_best_pick(best_pick: dict):
     if not best_pick:
@@ -775,7 +1069,6 @@ def render_day_plans(days: list[dict]) -> None:
 render_hero()
 render_before_after()
 
-# 👇 ADD THE INTRO LINE RIGHT HERE
 st.html("""
 <p class="preview-note">
 See what a refined plan looks like before you build your own.
@@ -944,6 +1237,12 @@ if submitted:
                 trip_strategy = result.get("trip_strategy", {})
                 days = result.get("days", [])
 
+                access_code = st.text_input("Enter access code to unlock the full plan", type="password")
+                is_unlocked = access_code == "moment"
+
+                preview_stay = stay_recommendations if is_unlocked else stay_recommendations[:2]
+                preview_days = days if is_unlocked else days[:2]
+
                 st.markdown('<div class="luxury-divider"></div>', unsafe_allow_html=True)
                 st.markdown(f"# {title}")
 
@@ -953,10 +1252,48 @@ if submitted:
                 render_best_pick(best_pick)
                 render_trip_strategy(trip_strategy)
 
-                if need_stay and stay_recommendations:
-                    render_stay_recommendations(stay_recommendations)
+                if need_stay and preview_stay:
+                    render_stay_recommendations(preview_stay)
 
-                render_day_plans(days)
+                render_day_plans(preview_days)
+
+                if not is_unlocked:
+                    st.markdown("---")
+                    st.markdown("## 🔓 Unlock the Full Moment Plan")
+                    st.markdown("""
+Most people spend hours researching, second-guessing, and still end up unsure.
+
+Unlock the full plan to get:
+
+- the full trip strategy
+- every day of your plan
+- neighborhood guidance
+- pacing, budget, and tradeoff decisions
+- a premium PDF you can save and share
+
+### Get the full plan for $9
+""")
+
+                preview_pdf = build_pdf(result, full_export=False)
+
+                st.download_button(
+                    label="📄 Download Preview PDF",
+                    data=preview_pdf,
+                    file_name="moment_plan_preview.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+
+                if is_unlocked:
+                    full_pdf = build_pdf(result, full_export=True)
+
+                    st.download_button(
+                        label="✨ Download Full Moment Plan PDF",
+                        data=full_pdf,
+                        file_name="the_moment_plan_full.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
 
             except Exception as e:
                 st.error(f"Something went wrong: {e}")
