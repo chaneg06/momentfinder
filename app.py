@@ -46,7 +46,7 @@ if "last_request_signature" not in st.session_state:
     st.session_state.last_request_signature = None
 
 # -----------------------------
-# Styles - older fuller card version
+# Styles - fuller card version
 # -----------------------------
 st.markdown("""
 <style>
@@ -175,6 +175,14 @@ st.markdown("""
         color: #6a6f7a;
         margin-top: -0.25rem;
         margin-bottom: 1rem;
+    }
+
+    .dayflow-box {
+        padding: 0.9rem 1rem;
+        border-radius: 18px;
+        background: #faf9fd;
+        border: 1px solid rgba(20,20,20,0.05);
+        height: 100%;
     }
 
     div[data-testid="stMetric"] {
@@ -366,6 +374,14 @@ For each day:
 - Include one moment that feels a little unexpected, bold, or outside the usual plan when appropriate.
 - Frame it in a way that makes the user feel comfortable and intrigued, not pressured.
 
+For each day, organize the recommendation into loose time blocks when helpful:
+- morning
+- afternoon
+- evening
+
+Do not create a rigid hour-by-hour itinerary.
+Use time blocks only to make the day easier to follow.
+
 For each day include:
 - day_type (Easy, Balanced, Full, Reset)
 - priority (Protect This, Worth It, Only If It Flows)
@@ -373,6 +389,10 @@ For each day include:
 - best_choice
 - backup_option
 - skip_if_tired
+- day_flow:
+  - morning
+  - afternoon
+  - evening
 - why_this_works
 
 Each day plan should reflect the broader trip strategy.
@@ -447,6 +467,11 @@ Output ONLY valid JSON in this format:
       "best_choice": "Best recommendation for the day",
       "backup_option": "A realistic backup if plans change",
       "skip_if_tired": "What to skip if energy is low",
+      "day_flow": {
+        "morning": "Easy start with coffee and wandering",
+        "afternoon": "Keep it light and near your main anchor",
+        "evening": "Main experience and dinner flow"
+      },
       "loose_day_plan": "A relaxed description of how the day should flow around the anchor",
       "getting_around": {
         "mode": "Walk",
@@ -761,11 +786,11 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
             )
 
             if day.get("timing_context"):
-                story.append(Paragraph("Context", label_style))
+                story.append(Paragraph("Day context", label_style))
                 story.append(Paragraph(day.get("timing_context", ""), body_style))
 
             if day.get("booked_anchor"):
-                story.append(Paragraph("Locked in", label_style))
+                story.append(Paragraph("What’s already locked in", label_style))
                 story.append(Paragraph(day.get("booked_anchor", ""), body_style))
 
             story.append(Paragraph("Day shape", label_style))
@@ -778,20 +803,30 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 )
             )
 
+            day_flow = day.get("day_flow", {})
+            if day_flow:
+                story.append(Paragraph("Day flow", label_style))
+                if day_flow.get("morning"):
+                    story.append(Paragraph(f"<b>Morning:</b> {day_flow.get('morning', '')}", body_style))
+                if day_flow.get("afternoon"):
+                    story.append(Paragraph(f"<b>Afternoon:</b> {day_flow.get('afternoon', '')}", body_style))
+                if day_flow.get("evening"):
+                    story.append(Paragraph(f"<b>Evening:</b> {day_flow.get('evening', '')}", body_style))
+
             if day.get("best_choice"):
-                story.append(Paragraph("The move", label_style))
+                story.append(Paragraph("Best choice", label_style))
                 story.append(Paragraph(day.get("best_choice", ""), body_style))
 
             if day.get("backup_option"):
-                story.append(Paragraph("Backup", label_style))
+                story.append(Paragraph("Backup option", label_style))
                 story.append(Paragraph(day.get("backup_option", ""), body_style))
 
             if day.get("skip_if_tired"):
-                story.append(Paragraph("Skip if needed", label_style))
+                story.append(Paragraph("Skip if tired", label_style))
                 story.append(Paragraph(day.get("skip_if_tired", ""), body_style))
 
             if day.get("loose_day_plan"):
-                story.append(Paragraph("How the day unfolds", label_style))
+                story.append(Paragraph("Loose day plan", label_style))
                 story.append(Paragraph(day.get("loose_day_plan", ""), body_style))
 
             transport = day.get("getting_around", {})
@@ -805,7 +840,7 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 )
 
             if day.get("optional_add_on"):
-                story.append(Paragraph("If you want more", label_style))
+                story.append(Paragraph("Optional add-on", label_style))
                 story.append(Paragraph(day.get("optional_add_on", ""), body_style))
 
             if day.get("keep_it_easy"):
@@ -817,7 +852,7 @@ def build_pdf(result: dict, full_export: bool = False) -> bytes:
                 story.append(Paragraph(day.get("why_this_works", ""), body_style))
 
             if day.get("this_becomes"):
-                story.append(Paragraph("What this becomes", label_style))
+                story.append(Paragraph("The story you’ll tell later", label_style))
                 story.append(Paragraph(day.get("this_becomes", ""), body_style))
 
             story.append(Spacer(1, 14))
@@ -905,7 +940,7 @@ def get_experience_profile(group_type, curiosity, vibe):
 
 
 # -----------------------------
-# Render functions - older card style
+# Render functions - older card style with day flow
 # -----------------------------
 def render_hero():
     st.markdown("""
@@ -1021,14 +1056,9 @@ def render_sample_preview():
             <strong>Priority:</strong> Protect This &nbsp; • &nbsp;
             <strong>Budget:</strong> Medium<br><br>
 
-            <strong>What’s already locked in:</strong><br>
-            Canal cruise at 5pm<br><br>
-
-            <strong>Best choice:</strong><br>
-            Wander Jordaan before your cruise and let dinner happen afterward instead of forcing too much into the day.<br><br>
-
-            <strong>Getting around:</strong><br>
-            Walk — everything feels close, and part of the charm is the wandering.<br><br>
+            <strong>Morning:</strong> Slow coffee and neighborhood wandering.<br><br>
+            <strong>Afternoon:</strong> Keep it light so the evening still has energy.<br><br>
+            <strong>Evening:</strong> Canal cruise, then let dinner happen naturally.<br><br>
 
             <strong>The story you’ll tell later:</strong><br>
             “This was the day we didn’t try too hard and somehow it ended up being perfect.”
@@ -1144,6 +1174,29 @@ def render_day_plans(days: list[dict]) -> None:
 
             if day.get("booked_anchor"):
                 st.markdown(f"**What’s already locked in**  \n{day.get('booked_anchor', '')}")
+
+            day_flow = day.get("day_flow", {})
+            if day_flow:
+                st.markdown("### ✨ Day Flow")
+                f1, f2, f3 = st.columns(3)
+
+                with f1:
+                    st.markdown('<div class="dayflow-box">', unsafe_allow_html=True)
+                    st.markdown("**Morning**")
+                    st.write(day_flow.get("morning", ""))
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                with f2:
+                    st.markdown('<div class="dayflow-box">', unsafe_allow_html=True)
+                    st.markdown("**Afternoon**")
+                    st.write(day_flow.get("afternoon", ""))
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                with f3:
+                    st.markdown('<div class="dayflow-box">', unsafe_allow_html=True)
+                    st.markdown("**Evening**")
+                    st.write(day_flow.get("evening", ""))
+                    st.markdown('</div>', unsafe_allow_html=True)
 
             c1, c2 = st.columns(2)
 
